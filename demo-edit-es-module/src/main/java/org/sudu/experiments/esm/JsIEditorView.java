@@ -28,8 +28,8 @@ public interface JsIEditorView extends JsView {
    * <p>Line numbers and columns are 1-based, matching {@link JsPosition}.
    * The caret is placed at the range start.
    *
-   * @param shouldReveal        true to reveal the range start, false to only
-   *                            select without scrolling
+   * @param shouldReveal        true to scroll the range start into view
+   *                            vertically and horizontally, false to only select
    * @param fireVScrollListener whether to notify the vertical scroll observer,
    *                            if the module exposes one, when the call
    *                            changed the vertical scroll position. Diff pane

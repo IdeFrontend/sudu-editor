@@ -2216,7 +2216,11 @@ public class EditorComponent extends View implements
   private void revealLine(int lineNumber, boolean notifyObserver) {
     int viewLine = docToView.docToViewCursor(lineNumber);
     if (viewLine < 0) return;
-    int lineVPos = (viewLine - 1) * lineHeight;
+    // docToViewCursor is 0-based, the same coordinate caret layout uses
+    // (viewLine * lineHeight). Measuring (viewLine - 1) treats the previous
+    // line as the target, so the first line below the viewport is left
+    // off-screen.
+    int lineVPos = viewLine * lineHeight;
     if (lineVPos >= vScrollPos) {
       if (lineVPos - vScrollPos < editorHeight()) return;
       setScrollPosY(viewLine > getNumLines()
@@ -2233,14 +2237,18 @@ public class EditorComponent extends View implements
    * <p>The caret is placed at the range start.
    *
    * <p>When {@code shouldReveal} is false, nothing is scrolled: only the
-   * selection and the caret move. When it is true, the range start is revealed.
+   * selection and the caret move. When it is true, the range start is revealed
+   * on both axes. Vertical scrolling follows {@link #revealLine}; horizontal
+   * scrolling follows the caret, which this call places at the range start.
    *
    * <p>The reveal notifies the vertical scroll observer only when
    * {@code fireVScrollListener} is true and the vertical position changed. The
-   * diff sync listener is not suppressed.
+   * diff sync listener is not suppressed. Horizontal scrolling notifies the
+   * diff horizontal-scroll listener, same as a caret move.
    *
    * @param range               range in document coordinates, 0-based
-   * @param shouldReveal        true to reveal the range start, false to only
+   * @param shouldReveal        true to scroll the range start into view
+   *                            vertically and horizontally, false to only
    *                            select
    * @param fireVScrollListener whether to notify the vertical scroll observer
    *                            after the call
@@ -2251,6 +2259,10 @@ public class EditorComponent extends View implements
     selection().endPos.set(range.endLineNumber, range.endColumn);
     if (shouldReveal) {
       revealLine(range.startLineNumber, fireVScrollListener);
+      // revealLine only moves the vertical scroll. The caret is already at
+      // the range start, so the same horizontal adjustment a caret move uses
+      // brings that column into view.
+      adjustEditorHScrollToCaret();
     }
   }
 
