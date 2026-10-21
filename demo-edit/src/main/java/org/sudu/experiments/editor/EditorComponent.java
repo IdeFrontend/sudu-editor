@@ -2213,6 +2213,15 @@ public class EditorComponent extends View implements
     revealLine(lineNumber, true);
   }
 
+  public void highlightRanges(Range[] ranges) {
+  }
+
+  public void selectNextRange() {
+  }
+
+  public void selectPrevRange() {
+  }
+
   private void revealLine(int lineNumber, boolean notifyObserver) {
     int viewLine = docToView.docToViewCursor(lineNumber);
     if (viewLine < 0) return;

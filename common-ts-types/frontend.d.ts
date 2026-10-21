@@ -451,6 +451,12 @@ export interface IEditorView extends View, HasTheme, Focusable {
    */
   selectAndReveal(range: IRange, shouldReveal: boolean, fireVScrollListener: boolean): void
 
+  highlightRanges(ranges: IRange[]): void
+
+  selectNextRange(): void
+
+  selectPrevRange(): void
+
   getController(): EditorViewController;
 
   onControllerUpdate: IEvent<EditorViewController>
