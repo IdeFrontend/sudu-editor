@@ -97,12 +97,6 @@ public class EditorComponent extends View implements
   boolean drawTextFrame = false;
   boolean printResolveTime = true;
   boolean vScrollVisible = true;
-  // set while selectAndReveal moves the caret and scrolls: the observer is
-  // notified once at the end, or not at all, instead of once per internal step.
-  // The diff sync listener still follows every change, as for any other scroll.
-  boolean vScrollObserverSuppressed;
-  // set while selectAndReveal only selects: moving the caret must not scroll
-  boolean suppressCaretScroll;
 
   // line numbers
   LineNumbersComponent lineNumbers = new LineNumbersComponent();
@@ -515,9 +509,13 @@ public class EditorComponent extends View implements
   }
 
   void setScrollPosY(int vPos) {
+    setScrollPosY(vPos, true);
+  }
+
+  void setScrollPosY(int vPos, boolean notifyObserver) {
     int delta = vPos - getVScrollPos();
     if (setVScrollPosSilent(vPos)) {
-      notifyVScroll(delta);
+      notifyVScroll(delta, notifyObserver);
     }
   }
 
@@ -620,22 +618,24 @@ public class EditorComponent extends View implements
   public boolean setVScrollPos(int vPos) {
     int oldVScrollPos = vScrollPos;
     if (setVScrollPosSilent(vPos)) {
-      return notifyVScroll(vScrollPos - oldVScrollPos);
+      return notifyVScroll(vScrollPos - oldVScrollPos, true);
     }
     return false;
   }
 
   /**
-   * Notifies the diff sync listener and the scroll observer of an already
-   * applied vertical scroll change.
+   * Notifies the diff sync listener and, when {@code notifyObserver} is true,
+   * the scroll observer of an already applied vertical scroll change.
    *
+   * @param notifyObserver whether to call the observer registered with
+   *                       {@link #setVScrollObserver}
    * @return true if the position had changed, i.e. there was something to notify
    */
-  private boolean notifyVScroll(int delta) {
+  private boolean notifyVScroll(int delta, boolean notifyObserver) {
     if (vScrollListener != null) {
       vScrollListener.accept(delta);
     }
-    if (!vScrollObserverSuppressed && vScrollObserver != null) {
+    if (notifyObserver && vScrollObserver != null) {
       vScrollObserver.accept(vScrollPos);
     }
     return true;
@@ -1315,20 +1315,38 @@ public class EditorComponent extends View implements
   }
 
   public boolean setCaretLinePos(int line, int pos, boolean shift) {
+    return setCaretLinePos(line, pos, shift, true);
+  }
+
+  /**
+   * Moves the caret to the given position.
+   *
+   * @param adjustScroll false to leave the viewport where it is, for callers
+   *                     that do their own reveal
+   */
+  private boolean setCaretLinePos(int line, int pos, boolean shift, boolean adjustScroll) {
     model.caretCharPos = pos;
-    return setCaretLine(line, shift);
+    return setCaretLine(line, shift, adjustScroll);
   }
 
   private boolean setCaretLine(int value, boolean shift) {
+    return setCaretLine(value, shift, true);
+  }
+
+  private boolean setCaretLine(int value, boolean shift, boolean adjustScroll) {
     model.caretLine = Numbers.clamp(0, value, model.document.length() - 1);
     // caretLine = -1;
-    return setCaretPos(model.caretCharPos, shift);
+    return setCaretPos(model.caretCharPos, shift, adjustScroll);
   }
 
   private boolean setCaretPos(int charPos, boolean shift) {
+    return setCaretPos(charPos, shift, true);
+  }
+
+  private boolean setCaretPos(int charPos, boolean shift, boolean adjustScroll) {
     model.caretCharPos = Numbers.clamp(0, charPos, caretCodeLine().totalStrLength);
     recomputeCaretPosY();
-    adjustEditorScrollToCaret();
+    if (adjustScroll) adjustEditorScrollToCaret();
     if (shift) selection().isSelectionStarted = true;
     selection().select(model.caretLine, model.caretCharPos);
     selection().isSelectionStarted = false;
@@ -1343,7 +1361,6 @@ public class EditorComponent extends View implements
   }
 
   private void adjustEditorScrollToCaret() {
-    if (suppressCaretScroll) return;
     adjustEditorVScrollToCaret();
     adjustEditorHScrollToCaret();
   }
@@ -2193,6 +2210,10 @@ public class EditorComponent extends View implements
   }
 
   public void revealLine(int lineNumber) {
+    revealLine(lineNumber, true);
+  }
+
+  private void revealLine(int lineNumber, boolean notifyObserver) {
     int viewLine = docToView.docToViewCursor(lineNumber);
     if (viewLine < 0) return;
     int lineVPos = (viewLine - 1) * lineHeight;
@@ -2200,9 +2221,9 @@ public class EditorComponent extends View implements
       if (lineVPos - vScrollPos < editorHeight()) return;
       setScrollPosY(viewLine > getNumLines()
           ? maxVScrollPos()
-          : (viewLine + 1) * lineHeight - editorHeight());
+          : (viewLine + 1) * lineHeight - editorHeight(), notifyObserver);
     } else {
-      setScrollPosY((viewLine - 2) * lineHeight);
+      setScrollPosY((viewLine - 2) * lineHeight, notifyObserver);
     }
   }
 
@@ -2214,8 +2235,7 @@ public class EditorComponent extends View implements
    * <p>When {@code shouldReveal} is false, nothing is scrolled: only the
    * selection and the caret move. When it is true, the range start is revealed.
    *
-   * <p>The vertical scroll observer is not called while the caret moves and the
-   * reveal scrolls, then it is called at most once, and only when
+   * <p>The reveal notifies the vertical scroll observer only when
    * {@code fireVScrollListener} is true and the vertical position changed. The
    * diff sync listener is not suppressed.
    *
@@ -2226,25 +2246,11 @@ public class EditorComponent extends View implements
    *                            after the call
    */
   public void selectAndReveal(Range range, boolean shouldReveal, boolean fireVScrollListener) {
-    int previousVScrollPos = vScrollPos;
-    boolean previousObserverSuppress = vScrollObserverSuppressed;
-    boolean previousCaretScrollSuppress = suppressCaretScroll;
-
-    vScrollObserverSuppressed = true;
-    suppressCaretScroll = true;
-
-    setCaretLinePos(range.startLineNumber, range.startColumn, false);
+    setCaretLinePos(range.startLineNumber, range.startColumn, false, false);
     selection().startPos.set(range.startLineNumber, range.startColumn);
     selection().endPos.set(range.endLineNumber, range.endColumn);
     if (shouldReveal) {
-      revealLine(range.startLineNumber);
-    }
-
-    suppressCaretScroll = previousCaretScrollSuppress;
-    vScrollObserverSuppressed = previousObserverSuppress;
-
-    if (fireVScrollListener && !previousObserverSuppress && vScrollPos != previousVScrollPos) {
-      notifyVScrollObserver();
+      revealLine(range.startLineNumber, fireVScrollListener);
     }
   }
 
