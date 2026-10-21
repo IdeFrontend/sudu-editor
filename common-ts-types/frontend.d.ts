@@ -139,10 +139,10 @@ export interface ITextModel extends IDisposable {
 
 // numeration starts from 1
 export interface IRange {
-  endColumn: number,
-  endLineNumber: number,
+  startLineNumber: number,
   startColumn: number,
-  startLineNumber: number
+  endLineNumber: number,
+  endColumn: number
 }
 
 export interface ICancellationToken {
