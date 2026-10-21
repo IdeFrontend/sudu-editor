@@ -307,6 +307,7 @@ public class UnifiedDiffView extends View implements Focusable {
           pos.y + yPosition, pos.x + textBaseX, g,
           textViewWidth, lineHeight, hScrollPos,
           codeLineColors, null, //  getSelLineSegment(lineIndex, cLine, selectionTemp),
+          null,
           model.definition, model.usages,
           model.caretLine == lineIndex, null, null,
           diff);
