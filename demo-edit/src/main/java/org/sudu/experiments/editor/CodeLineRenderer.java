@@ -23,6 +23,7 @@ public class CodeLineRenderer implements Disposable {
   CodeLine line;
   GL.Texture[] textures;
   int curFromTexture = 0;
+  private final V2i selTemp = new V2i();
 
   public CodeLineRenderer(ClrContext context) {
     this.context = context;
@@ -136,24 +137,26 @@ public class CodeLineRenderer implements Disposable {
       int lineHeight,
       int horScrollPos,
       CodeLineColorScheme colors,
-      V2i selectedSegment,
-      V2i[] highlightRanges,
-      CodeElement def,
-      List<CodeElement> usages,
-      boolean isCurrentLine,
-      V4f overrideBackground, V4f overrideForeground,
-      LineDiff diff
+      Model model,
+      int lineIndex,
+      V4f overrideBackground, V4f overrideForeground
   ) {
     int lineMeasure = line.lineMeasure();
     if (lineMeasure == 0 || horScrollPos >= lineMeasure)
       return;
 
-    if (selectedSegment != null)
-      selectedSegment.y = Math.min(selectedSegment.y, lineMeasure);
+    CodeElement def = model != null ? model.definition : null;
+    List<CodeElement> usages = model != null ? model.usages : null;
+    boolean isCurrentLine = model != null && model.caretLine == lineIndex;
+    LineDiff diff = model != null && model.diffModel != null && lineIndex < model.diffModel.length
+        ? model.diffModel[lineIndex]
+        : null;
+    V2i selectedSegment = model != null ? selectedSegment(model, lineIndex, g) : null;
+    V2i[] highlightRanges = model != null ? highlightSegments(model, lineIndex, g): null;
+
+    if (selectedSegment != null) selectedSegment.y = Math.min(selectedSegment.y, lineMeasure);
     if (highlightRanges != null) {
-      for (V2i range : highlightRanges) {
-        if (range != null) range.y = Math.min(range.y, lineMeasure);
-      }
+      for (V2i range: highlightRanges) range.y = Math.min(range.y, lineMeasure);
     }
 
     int[] iMeasure = line.iMeasure;
@@ -220,6 +223,36 @@ public class CodeLineRenderer implements Disposable {
         i--;
       }
     }
+  }
+
+  private V2i selectedSegment(Model model, int lineIndex, WglGraphics g) {
+    V2i selLine = model.selection.getLine(lineIndex, selTemp);
+    if (selLine == null) return null;
+    if (selLine.y == -1) selLine.y = line.totalStrLength;
+    selLine.x = line.computePixelLocation(selLine.x, g.mCanvas, context.fonts);
+    selLine.y = line.computePixelLocation(selLine.y, g.mCanvas, context.fonts);
+    return selLine;
+  }
+
+  private V2i[] highlightSegments(Model model, int lineIndex, WglGraphics g) {
+    Range[] ranges = model.highlightRanges;
+    if (ranges == null || ranges.length == 0) return null;
+    int n = 0;
+    for (Range r : ranges) {
+      if (r != null && r.startLineNumber <= lineIndex && lineIndex <= r.endLineNumber) n++;
+    }
+    if (n == 0) return null;
+    V2i[] result = new V2i[n];
+    int j = 0;
+    for (Range r : ranges) {
+      if (r == null || lineIndex < r.startLineNumber || lineIndex > r.endLineNumber) continue;
+      int start = lineIndex > r.startLineNumber ? 0 : r.startColumn;
+      int end = lineIndex < r.endLineNumber ? line.totalStrLength : r.endColumn;
+      result[j++] = new V2i(
+          line.computePixelLocation(start, g.mCanvas, context.fonts),
+          line.computePixelLocation(end, g.mCanvas, context.fonts));
+    }
+    return result;
   }
 
   private V4f resolveElementBg(

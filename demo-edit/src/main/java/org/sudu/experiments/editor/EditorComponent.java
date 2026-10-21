@@ -712,17 +712,11 @@ public class EditorComponent extends View implements
 
       fullWidth = Math.max(fullWidth, lineMeasure + rightPadding);
 
-      LineDiff diff = diffModel == null || lineIndex >= diffModel.length
-          ? null : diffModel[lineIndex];
-      V2i selectionTemp = context.v2i2;
       line.draw(
           pos.y + yPosition, pos.x + textBaseX, g,
           textViewWidth, lineHeight, hScrollPos,
-          codeLineColors, getSelLineSegment(lineIndex, cLine, selectionTemp),
-          getHighlightLineSegments(lineIndex, cLine),
-          model.definition, model.usages,
-          model.caretLine == lineIndex, null, null,
-              diff);
+          codeLineColors, model, lineIndex,
+          null, null);
     }
 
     this.fullWidth = fullWidth;
@@ -899,37 +893,6 @@ public class EditorComponent extends View implements
         g.drawRect(pos.x + xPos0,pos.y + yPosition, size, c);
       }
     }
-  }
-
-  private V2i getSelLineSegment(int lineInd, CodeLine line, V2i rv) {
-    V2i selLine = selection().getLine(lineInd, rv);
-    if (selLine != null) {
-      if (selLine.y == -1) selLine.y = line.totalStrLength;
-      selLine.x = line.computePixelLocation(selLine.x, g.mCanvas, fonts);
-      selLine.y = line.computePixelLocation(selLine.y, g.mCanvas, fonts);
-    }
-    return selLine;
-  }
-
-  private V2i[] getHighlightLineSegments(int lineInd, CodeLine line) {
-    Range[] ranges = model.highlightRanges;
-    if (ranges == null || ranges.length == 0) return null;
-    int n = 0;
-    for (Range r : ranges) {
-      if (r != null && r.startLineNumber <= lineInd && lineInd <= r.endLineNumber) n++;
-    }
-    if (n == 0) return null;
-    V2i[] result = new V2i[n];
-    int j = 0;
-    for (Range r : ranges) {
-      if (r == null || lineInd < r.startLineNumber || lineInd > r.endLineNumber) continue;
-      int start = lineInd > r.startLineNumber ? 0 : r.startColumn;
-      int end = lineInd < r.endLineNumber ? line.totalStrLength : r.endColumn;
-      result[j++] = new V2i(
-          line.computePixelLocation(start, g.mCanvas, fonts),
-          line.computePixelLocation(end, g.mCanvas, fonts));
-    }
-    return result;
   }
 
   private void drawLineNumbers(int firstLine, int lastLine) {
