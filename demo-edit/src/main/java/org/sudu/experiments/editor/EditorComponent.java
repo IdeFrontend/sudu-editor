@@ -2217,12 +2217,12 @@ public class EditorComponent extends View implements
     int viewLine = docToView.docToViewCursor(lineNumber);
     if (viewLine < 0) return;
     // docToViewCursor is 0-based, the same coordinate caret layout uses
-    // (viewLine * lineHeight). Measuring (viewLine - 1) treats the previous
-    // line as the target, so the first line below the viewport is left
-    // off-screen.
-    int lineVPos = viewLine * lineHeight;
-    if (lineVPos >= vScrollPos) {
-      if (lineVPos - vScrollPos < editorHeight()) return;
+    // (viewLine * lineHeight). The line counts as revealed only when it is
+    // fully inside the viewport; a top that merely intersects the viewport
+    // still leaves the rest of the line clipped.
+    int lineTop = viewLine * lineHeight;
+    if (lineTop >= vScrollPos) {
+      if (lineTop + lineHeight <= vScrollPos + editorHeight()) return;
       setScrollPosY(viewLine > getNumLines()
           ? maxVScrollPos()
           : (viewLine + 1) * lineHeight - editorHeight(), notifyObserver);
