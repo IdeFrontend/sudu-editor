@@ -440,7 +440,15 @@ function stepSearch(delta) {
     return;
   }
 
-  searchIndex = (searchIndex + delta + matches.length) % matches.length;
+  // -1 means this query has no current match. The first step should land on
+  // the first match going forward and the last match going backward.
+  // (index + delta + length) % length treats -1 as a real index, so the first
+  // backward step evaluates to length - 2 and skips the final match.
+  if (searchIndex < 0) {
+    searchIndex = delta < 0 ? matches.length - 1 : 0;
+  } else {
+    searchIndex = (searchIndex + delta + matches.length) % matches.length;
+  }
   searchStatus.textContent = `${searchIndex + 1}/${matches.length}`;
 
   // `shouldReveal` decides whether the editor scrolls to the match at all;
