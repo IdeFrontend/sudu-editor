@@ -41,9 +41,6 @@ public class EditorColors {
     this.currentLineBg = currentLineBg;
   }
 
-  // Temporary plug until a real theme color is chosen
-  private static final Color highlightRangesBgPlug = new Color("#5B5B2A");
-
   public static EditorColors darculaIdeaColorScheme() {
     return new EditorColors(
         new Color(IdeaCodeColors.Darcula.cursor),
@@ -51,7 +48,7 @@ public class EditorColors {
         new Color(IdeaCodeColors.Darcula.editNumbersVLine),
         new Color(IdeaCodeColors.Darcula.editFooterFill),
         new Color(IdeaCodeColors.Darcula.editSelectedBg),
-        new Color(highlightRangesBgPlug),
+        new Color(IdeaCodeColors.Darcula.highlightRangeBg),
         new Color(IdeaCodeColors.Darcula.definitionBgColor),
         new Color(IdeaCodeColors.Darcula.usageBgColor),
         new Color(IdeaCodeColors.Darcula.scrollBarBg),
@@ -67,7 +64,7 @@ public class EditorColors {
         new Color(IdeaCodeColors.Dark.editNumbersVLine),
         new Color(IdeaCodeColors.Dark.editFooterFill),
         new Color(IdeaCodeColors.Dark.editSelectedBg),
-        new Color(highlightRangesBgPlug),
+        new Color(IdeaCodeColors.Dark.highlightRangeBg),
         new Color(IdeaCodeColors.Dark.definitionBgColor),
         new Color(IdeaCodeColors.Dark.usageBgColor),
         new Color(IdeaCodeColors.Dark.scrollBarBg),
@@ -83,7 +80,7 @@ public class EditorColors {
         new Color(IdeaCodeColors.Light.editNumbersVLine),
         new Color(IdeaCodeColors.Light.editFooterFill),
         new Color(IdeaCodeColors.Light.editSelectedBg),
-        new Color(highlightRangesBgPlug),
+        new Color(IdeaCodeColors.Light.highlightRangeBg),
         new Color(IdeaCodeColors.Light.definitionBgColor),
         new Color(IdeaCodeColors.Light.usageBgColor),
         new Color(IdeaCodeColors.Light.scrollBarBg),
