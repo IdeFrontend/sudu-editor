@@ -10,9 +10,10 @@ import * as editorApi from "../src/codereview.js";
  * values are in *device* pixels, while the DOM works in CSS pixels, so
  * everything crossing that boundary is divided by the device pixel ratio.
  *
- * The toolbar search is a small caller of `selectAndReveal`: the `reveal`
- * checkbox maps to its `shouldReveal` flag and `notify` to its
- * `fireVScrollListener` flag, so both behaviours can be tried side by side.
+ * The toolbar search paints every match with `highlightRanges`, then moves
+ * between them with `selectAndReveal`. The `reveal` checkbox maps to
+ * `shouldReveal` and `notify` to `fireVScrollListener`, so both scroll
+ * behaviours can be tried side by side.
  */
 
 const SAMPLE = [
@@ -397,7 +398,8 @@ let searchQuery = "";
  * Finds every occurrence of `query` in `text`, case-insensitively.
  *
  * The ranges are in the editor's 1-based coordinates - the shape
- * `selectAndReveal` accepts - so they can be passed straight through.
+ * `highlightRanges` / `selectAndReveal` accept - so they can be passed
+ * straight through.
  */
 function findMatches(text, query) {
   if (query === "") return [];
@@ -423,9 +425,15 @@ function findMatches(text, query) {
   return matches;
 }
 
+/** Paints every match (or clears the paint when there are none). */
+function applyHighlight(matches) {
+  editor.highlightRanges(matches);
+}
+
 /**
  * Selects the next (delta 1) or previous (delta -1) match and hands it to
- * `selectAndReveal`, wrapping around at the ends.
+ * `selectAndReveal`, wrapping around at the ends. All matches stay painted
+ * via `highlightRanges`.
  */
 function stepSearch(delta) {
   const query = searchInput.value;
@@ -435,6 +443,7 @@ function stepSearch(delta) {
   }
 
   const matches = findMatches(editor.getText(), query);
+  applyHighlight(matches);
   if (matches.length === 0) {
     searchStatus.textContent = query === "" ? "" : "no match";
     return;
@@ -471,11 +480,15 @@ function wireSearch() {
     stepSearch(event.shiftKey ? -1 : 1);
   });
 
-  // A new query starts from the first match again.
+  // Typing updates the highlight paint immediately; next/prev resets to the
+  // first match of the new query.
   searchInput.addEventListener("input", () => {
     searchQuery = "";
     searchIndex = -1;
-    searchStatus.textContent = "";
+    const matches = findMatches(editor.getText(), searchInput.value);
+    applyHighlight(matches);
+    searchStatus.textContent =
+      searchInput.value === "" ? "" : matches.length === 0 ? "no match" : `${matches.length} matches`;
   });
 }
 

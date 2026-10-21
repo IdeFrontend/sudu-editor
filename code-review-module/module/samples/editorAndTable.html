@@ -46,8 +46,9 @@
     #toolbar button:hover { background-color: #4a4a4a; }
 
     /*
-      Search controls. `reveal` and `notify` are wired straight to the two
-      boolean parameters of IEditorView.selectAndReveal.
+      Search controls. Matches are painted with IEditorView.highlightRanges;
+      `reveal` / `notify` map to selectAndReveal's two boolean flags when
+      stepping between matches.
     */
     #toolbar .search {
       display: flex;

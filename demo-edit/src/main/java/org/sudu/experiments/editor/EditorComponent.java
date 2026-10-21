@@ -2236,6 +2236,8 @@ public class EditorComponent extends View implements
   }
 
   public void highlightRanges(Range[] ranges) {
+    model.highlightRanges = ranges;
+    window().repaint();
   }
 
   public void selectNextRange() {
