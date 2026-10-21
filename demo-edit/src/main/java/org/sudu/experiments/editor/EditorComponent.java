@@ -719,7 +719,7 @@ public class EditorComponent extends View implements
           pos.y + yPosition, pos.x + textBaseX, g,
           textViewWidth, lineHeight, hScrollPos,
           codeLineColors, getSelLineSegment(lineIndex, cLine, selectionTemp),
-          null,
+          getHighlightLineSegments(lineIndex, cLine),
           model.definition, model.usages,
           model.caretLine == lineIndex, null, null,
               diff);
@@ -909,6 +909,27 @@ public class EditorComponent extends View implements
       selLine.y = line.computePixelLocation(selLine.y, g.mCanvas, fonts);
     }
     return selLine;
+  }
+
+  private V2i[] getHighlightLineSegments(int lineInd, CodeLine line) {
+    Range[] ranges = model.highlightRanges;
+    if (ranges == null || ranges.length == 0) return null;
+    int n = 0;
+    for (Range r : ranges) {
+      if (r != null && r.startLineNumber <= lineInd && lineInd <= r.endLineNumber) n++;
+    }
+    if (n == 0) return null;
+    V2i[] result = new V2i[n];
+    int j = 0;
+    for (Range r : ranges) {
+      if (r == null || lineInd < r.startLineNumber || lineInd > r.endLineNumber) continue;
+      int start = lineInd > r.startLineNumber ? 0 : r.startColumn;
+      int end = lineInd < r.endLineNumber ? line.totalStrLength : r.endColumn;
+      result[j++] = new V2i(
+          line.computePixelLocation(start, g.mCanvas, fonts),
+          line.computePixelLocation(end, g.mCanvas, fonts));
+    }
+    return result;
   }
 
   private void drawLineNumbers(int firstLine, int lastLine) {

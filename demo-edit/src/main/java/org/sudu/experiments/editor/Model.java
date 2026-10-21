@@ -47,6 +47,7 @@ public class Model {
   int caretLine, caretCharPos;
   CodeElement definition = null;
   final List<CodeElement> usages = new ArrayList<>();
+  Range[] highlightRanges;
   final List<V2i> parsedVps = new ArrayList<>();
   private SemanticTokenInfo[] pendingSemanticTokens;
   private SemanticTokenInfo[] documentTokens;
