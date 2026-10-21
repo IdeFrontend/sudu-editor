@@ -97,6 +97,12 @@ public class EditorComponent extends View implements
   boolean drawTextFrame = false;
   boolean printResolveTime = true;
   boolean vScrollVisible = true;
+  // set while selectAndReveal moves the caret and scrolls: the observer is
+  // notified once at the end, or not at all, instead of once per internal step.
+  // The diff sync listener still follows every change, as for any other scroll.
+  boolean vScrollObserverSuppressed;
+  // set while selectAndReveal only selects: moving the caret must not scroll
+  boolean suppressCaretScroll;
 
   // line numbers
   LineNumbersComponent lineNumbers = new LineNumbersComponent();
@@ -629,7 +635,7 @@ public class EditorComponent extends View implements
     if (vScrollListener != null) {
       vScrollListener.accept(delta);
     }
-    if (vScrollObserver != null) {
+    if (!vScrollObserverSuppressed && vScrollObserver != null) {
       vScrollObserver.accept(vScrollPos);
     }
     return true;
@@ -1337,6 +1343,7 @@ public class EditorComponent extends View implements
   }
 
   private void adjustEditorScrollToCaret() {
+    if (suppressCaretScroll) return;
     adjustEditorVScrollToCaret();
     adjustEditorHScrollToCaret();
   }
@@ -2196,6 +2203,48 @@ public class EditorComponent extends View implements
           : (viewLine + 1) * lineHeight - editorHeight());
     } else {
       setScrollPosY((viewLine - 2) * lineHeight);
+    }
+  }
+
+  /**
+   * Selects the given document range, optionally scrolling it into view.
+   *
+   * <p>The caret is placed at the range start.
+   *
+   * <p>When {@code shouldReveal} is false, nothing is scrolled: only the
+   * selection and the caret move. When it is true, the range start is revealed.
+   *
+   * <p>The vertical scroll observer is not called while the caret moves and the
+   * reveal scrolls, then it is called at most once, and only when
+   * {@code fireVScrollListener} is true and the vertical position changed. The
+   * diff sync listener is not suppressed.
+   *
+   * @param range               range in document coordinates, 0-based
+   * @param shouldReveal        true to reveal the range start, false to only
+   *                            select
+   * @param fireVScrollListener whether to notify the vertical scroll observer
+   *                            after the call
+   */
+  public void selectAndReveal(Range range, boolean shouldReveal, boolean fireVScrollListener) {
+    int previousVScrollPos = vScrollPos;
+    boolean previousObserverSuppress = vScrollObserverSuppressed;
+    boolean previousCaretScrollSuppress = suppressCaretScroll;
+
+    vScrollObserverSuppressed = true;
+    suppressCaretScroll = true;
+
+    setCaretLinePos(range.startLineNumber, range.startColumn, false);
+    selection().startPos.set(range.startLineNumber, range.startColumn);
+    selection().endPos.set(range.endLineNumber, range.endColumn);
+    if (shouldReveal) {
+      revealLine(range.startLineNumber);
+    }
+
+    suppressCaretScroll = previousCaretScrollSuppress;
+    vScrollObserverSuppressed = previousObserverSuppress;
+
+    if (fireVScrollListener && !previousObserverSuppress && vScrollPos != previousVScrollPos) {
+      notifyVScrollObserver();
     }
   }
 
