@@ -24,6 +24,8 @@ public class CodeLineRenderer implements Disposable {
   GL.Texture[] textures;
   int curFromTexture = 0;
   private final V2i selTemp = new V2i();
+  /** Reused across paints so highlight pixel segments are not allocated every frame. */
+  private V2i[] highlightScratch = new V2i[0];
 
   public CodeLineRenderer(ClrContext context) {
     this.context = context;
@@ -152,11 +154,11 @@ public class CodeLineRenderer implements Disposable {
         ? model.diffModel[lineIndex]
         : null;
     V2i selectedSegment = model != null ? selectedSegment(model, lineIndex, g) : null;
-    V2i[] highlightRanges = model != null ? highlightSegments(model, lineIndex, g): null;
+    int highlightCount = model != null ? fillHighlightSegments(model, lineIndex, g) : 0;
 
     if (selectedSegment != null) selectedSegment.y = Math.min(selectedSegment.y, lineMeasure);
-    if (highlightRanges != null) {
-      for (V2i range: highlightRanges) range.y = Math.min(range.y, lineMeasure);
+    for (int h = 0; h < highlightCount; h++) {
+      highlightScratch[h].y = Math.min(highlightScratch[h].y, lineMeasure);
     }
 
     int[] iMeasure = line.iMeasure;
@@ -196,13 +198,10 @@ public class CodeLineRenderer implements Disposable {
       int midPad = isLastWord ? 0 : xOffset;
       int chunkEnd = Math.min(pxLen, (curTexture + 1) * TEXTURE_WIDTH);
 
-      if (highlightRanges != null) {
-        for (V2i range : highlightRanges) {
-          if (range == null) continue;
-          drawRangeOverlay(g, texture, screenX, yPosition, lineHeight,
-              texturePos, drawWidth, regionX, chunkEnd, midPad, endPad,
-              range, colorF, colors.highlightRangesBg);
-        }
+      for (int h = 0; h < highlightCount; h++) {
+        drawRangeOverlay(g, texture, screenX, yPosition, lineHeight,
+            texturePos, drawWidth, regionX, chunkEnd, midPad, endPad,
+            highlightScratch[h], colorF, colors.highlightRangesBg);
       }
       if (selectedSegment != null) {
         drawRangeOverlay(g, texture, screenX, yPosition, lineHeight,
@@ -234,25 +233,38 @@ public class CodeLineRenderer implements Disposable {
     return selLine;
   }
 
-  private V2i[] highlightSegments(Model model, int lineIndex, WglGraphics g) {
+  /**
+   * Fills {@link #highlightScratch} with pixel segments for {@code lineIndex}.
+   * @return number of segments written (0 when none)
+   */
+  private int fillHighlightSegments(Model model, int lineIndex, WglGraphics g) {
     Range[] ranges = model.highlightRanges;
-    if (ranges == null || ranges.length == 0) return null;
+    if (ranges == null || ranges.length == 0) return 0;
     int n = 0;
     for (Range r : ranges) {
       if (r != null && r.startLineNumber <= lineIndex && lineIndex <= r.endLineNumber) n++;
     }
-    if (n == 0) return null;
-    V2i[] result = new V2i[n];
+    if (n == 0) return 0;
+    ensureHighlightScratch(n);
     int j = 0;
     for (Range r : ranges) {
       if (r == null || lineIndex < r.startLineNumber || lineIndex > r.endLineNumber) continue;
       int start = lineIndex > r.startLineNumber ? 0 : r.startColumn;
       int end = lineIndex < r.endLineNumber ? line.totalStrLength : r.endColumn;
-      result[j++] = new V2i(
+      highlightScratch[j++].set(
           line.computePixelLocation(start, g.mCanvas, context.fonts),
           line.computePixelLocation(end, g.mCanvas, context.fonts));
     }
-    return result;
+    return n;
+  }
+
+  private void ensureHighlightScratch(int n) {
+    if (highlightScratch.length >= n) return;
+    V2i[] next = Arrays.copyOf(highlightScratch, n);
+    for (int i = 0; i < n; i++) {
+      if (next[i] == null) next[i] = new V2i();
+    }
+    highlightScratch = next;
   }
 
   private V4f resolveElementBg(
