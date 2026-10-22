@@ -2204,9 +2204,17 @@ public class EditorComponent extends View implements
   }
 
   public void selectNextRange() {
+    Range range = model.findAdjacentHighlightRange(true);
+    if (range == null) return;
+    selectAndReveal(range, true, true);
+    window().repaint();
   }
 
   public void selectPrevRange() {
+    Range range = model.findAdjacentHighlightRange(false);
+    if (range == null) return;
+    selectAndReveal(range, true, true);
+    window().repaint();
   }
 
   private void revealLine(int lineNumber, boolean notifyObserver) {

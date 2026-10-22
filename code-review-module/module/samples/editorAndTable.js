@@ -10,10 +10,10 @@ import * as editorApi from "../src/codereview.js";
  * values are in *device* pixels, while the DOM works in CSS pixels, so
  * everything crossing that boundary is divided by the device pixel ratio.
  *
- * The toolbar search paints every match with `highlightRanges`, then moves
- * between them with `selectAndReveal`. The `reveal` checkbox maps to
- * `shouldReveal` and `notify` to `fireVScrollListener`, so both scroll
- * behaviours can be tried side by side.
+ * The toolbar search paints every match with `highlightRanges`. Prev/next
+ * step with `selectAndReveal` (wrapping; `reveal` / `notify` checkboxes).
+ * Range prev/next call `selectPrevRange` / `selectNextRange` from the caret
+ * with no wrapping.
  */
 
 const SAMPLE = [
@@ -386,6 +386,8 @@ function clearHighlight() {
 const searchInput = document.getElementById("search-input");
 const searchPrevButton = document.getElementById("search-prev");
 const searchNextButton = document.getElementById("search-next");
+const rangePrevButton = document.getElementById("range-prev");
+const rangeNextButton = document.getElementById("range-next");
 const searchRevealCheckbox = document.getElementById("search-reveal");
 const searchNotifyCheckbox = document.getElementById("search-notify");
 const searchStatus = document.getElementById("search-status");
@@ -470,9 +472,40 @@ function stepSearch(delta) {
   );
 }
 
+/**
+ * Steps with selectNextRange / selectPrevRange (no wrap). Updates the status
+ * from the caret's new position against the current matches.
+ */
+function stepRange(next) {
+  const query = searchInput.value;
+  const matches = findMatches(editor.getText(), query);
+  applyHighlight(matches);
+  if (matches.length === 0) {
+    searchStatus.textContent = query === "" ? "" : "no match";
+    return;
+  }
+
+  if (next) editor.selectNextRange();
+  else editor.selectPrevRange();
+
+  const pos = editor.getPosition();
+  const index = matches.findIndex(
+    (m) =>
+      m.startLineNumber === pos.lineNumber && m.startColumn === pos.column
+  );
+  if (index >= 0) {
+    searchQuery = query;
+    searchIndex = index;
+    searchStatus.textContent = `${index + 1}/${matches.length}`;
+  }
+  // caret unchanged when there was no next/prev range — leave status as is
+}
+
 function wireSearch() {
   searchNextButton.addEventListener("click", () => stepSearch(1));
   searchPrevButton.addEventListener("click", () => stepSearch(-1));
+  rangeNextButton.addEventListener("click", () => stepRange(true));
+  rangePrevButton.addEventListener("click", () => stepRange(false));
 
   searchInput.addEventListener("keydown", (event) => {
     if (event.key !== "Enter") return;

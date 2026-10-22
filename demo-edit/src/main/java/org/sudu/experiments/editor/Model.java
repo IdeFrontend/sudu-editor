@@ -561,6 +561,32 @@ public class Model {
     );
   }
 
+  /**
+   * Finds the nearest highlighted range strictly after ({@code next}) or
+   * before the caret, by range start. Returns null when none exist.
+   */
+  Range findAdjacentHighlightRange(boolean next) {
+    if (highlightRanges == null) return null;
+    Range best = null;
+    for (Range r: highlightRanges) {
+      if (r == null) continue;
+      int cmp = comparePos(r.startLineNumber, r.startColumn, caretLine, caretCharPos);
+      if ((next && cmp <= 0) || (!next && cmp >= 0)) continue;
+      if (best == null) {
+        best = r;
+        continue;
+      }
+      cmp = comparePos(r.startLineNumber, r.startColumn, best.startLineNumber, best.startColumn);
+      if ((next && cmp < 0) || (!next && cmp > 0)) best = r;
+    }
+    return best;
+  }
+
+  private static int comparePos(int line1, int col1, int line2, int col2) {
+    if (line1 != line2) return Integer.compare(line1, line2);
+    return Integer.compare(col1, col2);
+  }
+
   private boolean isEmpty() {
     return document.length() == 1
         && document.lines[0].length() == 1
