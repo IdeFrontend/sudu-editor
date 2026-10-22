@@ -2187,11 +2187,15 @@ public class EditorComponent extends View implements
   }
 
   public void revealLineInCenter(int lineNumber) {
+    revealLineInCenter(lineNumber, true);
+  }
+
+  private void revealLineInCenter(int lineNumber, boolean notifyObserver) {
     int viewLine = docToView.docToViewCursor(lineNumber);
     if (viewLine < 0) return;
     int computed = lineHeight *
         (viewLine - (editorHeight() / (lineHeight * 2)) - 1);
-    setScrollPosY(computed);
+    setScrollPosY(computed, notifyObserver);
   }
 
   public void revealLine(int lineNumber) {
@@ -2242,8 +2246,9 @@ public class EditorComponent extends View implements
    *
    * <p>When {@code shouldReveal} is false, nothing is scrolled: only the
    * selection and the caret move. When it is true, the range start is revealed
-   * on both axes. Vertical scrolling follows {@link #revealLine}; horizontal
-   * scrolling follows the caret, which this call places at the range start.
+   * on both axes. Vertical scrolling follows {@link #revealLineInCenter};
+   * horizontal scrolling follows the caret, which this call places at the
+   * range start.
    *
    * <p>The reveal notifies the vertical scroll observer only when
    * {@code fireVScrollListener} is true and the vertical position changed. The
@@ -2262,9 +2267,9 @@ public class EditorComponent extends View implements
     selection().startPos.set(range.startLineNumber, range.startColumn);
     selection().endPos.set(range.endLineNumber, range.endColumn);
     if (shouldReveal) {
-      revealLine(range.startLineNumber, fireVScrollListener);
-      // revealLine only moves the vertical scroll. The caret is already at
-      // the range start, so the same horizontal adjustment a caret move uses
+      revealLineInCenter(range.startLineNumber, fireVScrollListener);
+      // revealLineInCenter only moves the vertical scroll. The caret is already
+      // at the range start, so the same horizontal adjustment a caret move uses
       // brings that column into view.
       adjustEditorHScrollToCaret();
     }
