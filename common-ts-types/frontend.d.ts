@@ -456,7 +456,7 @@ export interface IEditorView extends View, HasTheme, Focusable {
    * clear. The array is stored by reference until the next call — do not
    * mutate it afterward.
    */
-  highlightRanges(ranges: IRange[]): void
+  highlightRanges(ranges: IRange[] | null): void
 
   /**
    * Selects the next highlight after the caret and reveals it in the center.

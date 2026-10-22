@@ -335,6 +335,7 @@ public class JsCodeEditor implements JsEditorView {
   }
 
   static Range[] toRanges(JsArrayReader<JsRange> jsArr) {
+    if (jsArr == null) return null;
     Range[] result = new Range[jsArr.getLength()];
     for (int i = 0; i < result.length; i++) {
       result[i] = new Range();
