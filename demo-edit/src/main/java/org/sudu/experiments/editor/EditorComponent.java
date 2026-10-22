@@ -2207,6 +2207,12 @@ public class EditorComponent extends View implements
     window().repaint();
   }
 
+  /**
+   * Selects the next highlighted range after the caret and reveals it in the
+   * center. Always scrolls and notifies the vertical scroll observer (same as
+   * {@code selectAndReveal(range, true, true)}). No-op when there is no next
+   * range.
+   */
   public void selectNextRange() {
     Range range = model.findAdjacentHighlightRange(true);
     if (range == null) return;
@@ -2214,6 +2220,13 @@ public class EditorComponent extends View implements
     window().repaint();
   }
 
+  /**
+   * Selects the previous highlighted range before the caret and reveals it in
+   * the center. Always scrolls and notifies the vertical scroll observer (same
+   * as {@code selectAndReveal(range, true, true)}). No-op when there is no
+   * previous range. A caret inside a match skips that match and goes to the
+   * one before it.
+   */
   public void selectPrevRange() {
     Range range = model.findAdjacentHighlightRange(false);
     if (range == null) return;

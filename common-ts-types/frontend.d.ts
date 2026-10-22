@@ -451,10 +451,24 @@ export interface IEditorView extends View, HasTheme, Focusable {
    */
   selectAndReveal(range: IRange, shouldReveal: boolean, fireVScrollListener: boolean): void
 
+  /**
+   * Paints the given ranges as highlights. Pass an empty array or `null` to
+   * clear. The array is stored by reference until the next call — do not
+   * mutate it afterward.
+   */
   highlightRanges(ranges: IRange[]): void
 
+  /**
+   * Selects the next highlight after the caret and reveals it in the center.
+   * Always scrolls and fires the vertical scroll listener. No-op if none.
+   */
   selectNextRange(): void
 
+  /**
+   * Selects the previous highlight before the caret and reveals it in the
+   * center. Always scrolls and fires the vertical scroll listener. A caret
+   * inside a match skips that match. No-op if none.
+   */
   selectPrevRange(): void
 
   getController(): EditorViewController;

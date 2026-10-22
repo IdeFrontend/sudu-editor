@@ -564,6 +564,9 @@ public class Model {
   /**
    * Finds the nearest highlighted range strictly after ({@code next}) or
    * before the caret, by range start. Returns null when none exist.
+   *
+   * <p>For prev, ranges that contain the caret are skipped so a caret inside
+   * a match does not re-select that same match.
    */
   Range findAdjacentHighlightRange(boolean next) {
     if (highlightRanges == null) return null;
@@ -571,7 +574,7 @@ public class Model {
     for (Range r: highlightRanges) {
       if (r == null) continue;
       int cmp = comparePos(r.startLineNumber, r.startColumn, caretLine, caretCharPos);
-      if ((next && cmp <= 0) || (!next && cmp >= 0)) continue;
+      if ((next && cmp <= 0) || (!next && (cmp >= 0 || containsCaret(r)))) continue;
       if (best == null) {
         best = r;
         continue;
@@ -580,6 +583,12 @@ public class Model {
       if ((next && cmp < 0) || (!next && cmp > 0)) best = r;
     }
     return best;
+  }
+
+  /** True when caret is in {@code [start, end)} of {@code r}. */
+  private boolean containsCaret(Range r) {
+    return comparePos(r.startLineNumber, r.startColumn, caretLine, caretCharPos) <= 0
+        && comparePos(r.endLineNumber, r.endColumn, caretLine, caretCharPos) > 0;
   }
 
   private static int comparePos(int line1, int col1, int line2, int col2) {
