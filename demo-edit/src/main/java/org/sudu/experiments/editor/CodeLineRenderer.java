@@ -141,6 +141,7 @@ public class CodeLineRenderer implements Disposable {
       CodeLineColorScheme colors,
       Model model,
       int lineIndex,
+      boolean paintSelection,
       V4f overrideBackground, V4f overrideForeground
   ) {
     int lineMeasure = line.lineMeasure();
@@ -153,7 +154,8 @@ public class CodeLineRenderer implements Disposable {
     LineDiff diff = model != null && model.diffModel != null && lineIndex < model.diffModel.length
         ? model.diffModel[lineIndex]
         : null;
-    V2i selectedSegment = model != null ? selectedSegment(model, lineIndex, g) : null;
+    V2i selectedSegment = paintSelection && model != null
+        ? selectedSegment(model, lineIndex, g) : null;
     int highlightCount = model != null ? fillHighlightSegments(model, lineIndex, g) : 0;
 
     if (selectedSegment != null) selectedSegment.y = Math.min(selectedSegment.y, lineMeasure);

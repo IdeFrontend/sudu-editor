@@ -715,7 +715,7 @@ public class EditorComponent extends View implements
       line.draw(
           pos.y + yPosition, pos.x + textBaseX, g,
           textViewWidth, lineHeight, hScrollPos,
-          codeLineColors, model, lineIndex,
+          codeLineColors, model, lineIndex, true,
           null, null);
     }
 

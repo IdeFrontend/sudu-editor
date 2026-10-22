@@ -302,7 +302,8 @@ public class UnifiedDiffView extends View implements Focusable {
       line.draw(
           pos.y + yPosition, pos.x + textBaseX, g,
           textViewWidth, lineHeight, hScrollPos,
-          codeLineColors, model, docLine,
+          // selection painting stays off (was null selectedSegment before)
+          codeLineColors, model, docLine, false,
           null, null);
     }
     this.fullWidth = fullWidth;

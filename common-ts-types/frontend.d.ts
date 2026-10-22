@@ -443,7 +443,8 @@ export interface IEditorView extends View, HasTheme, Focusable {
    * The caret is placed at the range start.
    *
    * @param shouldReveal `true` to scroll the start of the range into view
-   *        vertically and horizontally, `false` to only select without scrolling
+   *        (vertically via reveal-in-center, and horizontally to the caret),
+   *        `false` to only select without scrolling
    * @param fireVScrollListener whether to notify the vertical scroll observer
    *        (the {@link EditorView.setVScrollListener} callback, where available)
    *        when the call changed the vertical scroll position. Diff pane
@@ -453,8 +454,9 @@ export interface IEditorView extends View, HasTheme, Focusable {
 
   /**
    * Paints the given ranges as highlights. Pass an empty array or `null` to
-   * clear. The array is stored by reference until the next call — do not
-   * mutate it afterward.
+   * clear. Java callers: the array is retained by reference until the next
+   * call — do not mutate it afterward. JS bridges copy on call, so mutating
+   * the JS array afterward is a no-op.
    */
   highlightRanges(ranges: IRange[] | null): void
 
