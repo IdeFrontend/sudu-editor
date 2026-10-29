@@ -6,6 +6,8 @@
     added ECMAScript 6 support, cleared and transformed to the universal grammar.
  * Copyright (c) 2018 by Juan Alvarez (contributor -> ported to Go)
  * Copyright (c) 2019 by Student Main (contributor -> ES2020)
+ * Copyright (c) 2019 by Andrii Artiushok (contributor -> added TypeScript support)
+ * Copyright (c) 2024 by Andrew Leppard (www.wegrok.review)
  *
  * Permission is hereby granted, free of charge, to any person
  * obtaining a copy of this software and associated documentation
@@ -28,9 +30,18 @@
  * FROM, OUT OF OR IN CONNECTION WITH THE SOFTWARE OR THE USE OR
  * OTHER DEALINGS IN THE SOFTWARE.
  */
-lexer grammar LightJavaScriptLexer;
 
-HashBangLine:                   '#!' ~[\r\n\u2028\u2029]*; // only allowed at start
+// $antlr-format alignTrailingComments true, columnLimit 150, maxEmptyLinesToKeep 1, reflowComments false, useTab false
+// $antlr-format allowShortRulesOnASingleLine true, allowShortBlocksOnASingleLine true, minEmptyLines 0, alignSemicolons ownLine
+// $antlr-format alignColons trailing, singleLineOverrulesHangingColon true, alignLexerCommands true, alignLabels true, alignTrailers true
+
+lexer grammar LightEcmaScriptLexer;
+
+options {
+    superClass = LightEcmaScriptLexerBase;
+}
+
+HashBangLine: '#!' ~[\r\n\u2028\u2029]* {this.isJavaScript()}?; // only allowed at start
 MultiLineComment:               '/*' .*? '*/'             -> channel(HIDDEN);
 SingleLineComment:              '//' ~[\r\n\u2028\u2029]* -> channel(HIDDEN);
 RegularExpressionLiteral:       '/' RegularExpressionFirstChar RegularExpressionChar* '/' IdentifierPart*;
@@ -61,9 +72,9 @@ Modulus:                        '%';
 Power:                          '**';
 NullCoalesce:                   '??';
 Hashtag:                        '#';
-RightShiftArithmetic:           '>>';
+RightShiftLogical:              '>>>' {this.isJavaScript()}?;
+RightShiftArithmetic:           '>>' {this.isJavaScript()}?;
 LeftShiftArithmetic:            '<<';
-RightShiftLogical:              '>>>';
 LessThan:                       '<';
 MoreThan:                       '>';
 LessThanEquals:                 '<=';
@@ -89,6 +100,7 @@ BitAndAssign:                   '&=';
 BitXorAssign:                   '^=';
 BitOrAssign:                    '|=';
 PowerAssign:                    '**=';
+NullishCoalescingAssign:        '??=' {this.isTypeScript()}?;
 ARROW:                          '=>';
 
 /// Null Literals
@@ -107,21 +119,19 @@ DecimalLiteral:                 DecimalIntegerLiteral '.' [0-9] [0-9_]* Exponent
               |                 DecimalIntegerLiteral ExponentPart?
               ;
 
-/// Numeric Literals
-
-HexIntegerLiteral:              '0' [xX] HexDigit HexDigit_*;
+HexIntegerLiteral:              '0' [xX] [0-9a-fA-F] HexDigit*;
 OctalIntegerLiteral:            '0' [0-7]+;
 OctalIntegerLiteral2:           '0' [oO] [0-7] [_0-7]*;
 BinaryIntegerLiteral:           '0' [bB] [01] [_01]*;
 
-BigHexIntegerLiteral:           '0' [xX] HexDigit HexDigit_* 'n';
+BigHexIntegerLiteral:           '0' [xX] [0-9a-fA-F] HexDigit* 'n';
 BigOctalIntegerLiteral:         '0' [oO] [0-7] [_0-7]* 'n';
 BigBinaryIntegerLiteral:        '0' [bB] [01] [_01]* 'n';
 BigDecimalIntegerLiteral:       DecimalIntegerLiteral 'n';
 
 Color
-    :                           '#' HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit
-    |                           '#' HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit
+    : '#' HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit {this.isJavaScript()}?
+    | '#' HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit {this.isJavaScript()}?
     ;
 
 /// Keywords
@@ -143,7 +153,7 @@ For:                            'for';
 Switch:                         'switch';
 While:                          'while';
 Debugger:                       'debugger';
-Function_:                       'function';
+Function_:                      'function';
 This:                           'this';
 With:                           'with';
 Default:                        'default';
@@ -153,8 +163,12 @@ Delete:                         'delete';
 In:                             'in';
 Try:                            'try';
 As:                             'as';
-// https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Lexical_grammar#identifiers_with_special_meanings
-From:                           'from'; // is 'from' a real keyword ???
+From:                           'from';
+ReadOnly:                       'readonly' {this.isTypeScript()}?;
+Async:                          'async';
+Await:                          'await';
+Yield:                          'yield';
+YieldStar:                      'yield*' {this.isTypeScript()}?;
 
 /// Future Reserved Words
 
@@ -165,10 +179,6 @@ Super:                          'super';
 Const:                          'const';
 Export:                         'export';
 Import:                         'import';
-
-Async:                          'async';
-Await:                          'await';
-Yield:                          'yield';
 
 /// The following tokens are also considered to be FutureReservedWords
 /// when parsing strict mode
@@ -182,11 +192,36 @@ Package:                        'package';
 Protected:                      'protected';
 Static:                         'static';
 
+// TypeScript-only keywords
+Any:                            'any' {this.isTypeScript()}?;
+Number:                         'number' {this.isTypeScript()}?;
+Never:                          'never' {this.isTypeScript()}?;
+Boolean:                        'boolean' {this.isTypeScript()}?;
+String:                         'string' {this.isTypeScript()}?;
+Unique:                         'unique' {this.isTypeScript()}?;
+Symbol:                         'symbol' {this.isTypeScript()}?;
+Undefined:                      'undefined' {this.isTypeScript()}?;
+Object:                         'object' {this.isTypeScript()}?;
+Of:                             'of' {this.isTypeScript()}?;
+KeyOf:                          'keyof' {this.isTypeScript()}?;
+TypeAlias:                      'type' {this.isTypeScript()}?;
+Constructor:                    'constructor' {this.isTypeScript()}?;
+Namespace:                      'namespace' {this.isTypeScript()}?;
+Require:                        'require' {this.isTypeScript()}?;
+Module:                         'module' {this.isTypeScript()}?;
+Declare:                        'declare' {this.isTypeScript()}?;
+Abstract:                       'abstract' {this.isTypeScript()}?;
+Is:                             'is' {this.isTypeScript()}?;
+
+// Decorators
+At:                             '@' {this.isTypeScript()}?;
+
 /// Identifier Names and Identifiers
 
 Identifier:                     IdentifierStart IdentifierPart*;
+
 /// String Literals
-StringLiteral:                 ('"' DoubleStringCharacter* '"'
+StringLiteral:                  ('"' DoubleStringCharacter* '"'
              |                  '\'' SingleStringCharacter* '\'')
              ;
 
@@ -194,21 +229,13 @@ BackTick:                       '`';
 
 WhiteSpaces:                    [\t\u000B\u000C\u0020\u00A0]+ -> channel(HIDDEN);
 
-LineTerminator:                 (('r'? '\n') | '\r') -> channel(HIDDEN);
-
-Error:                          . -> channel(HIDDEN);
+LineTerminator:                 [\r\n\u2028\u2029] -> channel(HIDDEN);
 
 /// Comments
 
-
 HtmlComment:                    '<!--' .*? '-->' -> channel(HIDDEN);
 CDataComment:                   '<![CDATA[' .*? ']]>' -> channel(HIDDEN);
-
-mode TEMPLATE;
-
-BackTickInside:                 '`' ;
-TemplateStringStartExpression:  '${';
-TemplateStringAtom:             ~[`];
+ERROR:                          . -> channel(HIDDEN);
 
 // Fragment rules
 
@@ -238,16 +265,16 @@ fragment CharacterEscapeSequence
     ;
 
 fragment HexEscapeSequence
-    : 'x' HexDigit_ HexDigit_
+    : 'x' HexDigit HexDigit
     ;
 
 fragment UnicodeEscapeSequence
-    : 'u' HexDigit_ HexDigit_ HexDigit_ HexDigit_
-    | 'u' '{' HexDigit_ HexDigit_+ '}'
+    : 'u' HexDigit HexDigit HexDigit HexDigit
+    | 'u' '{' HexDigit HexDigit+ '}'
     ;
 
 fragment ExtendedUnicodeEscapeSequence
-    : 'u' '{' HexDigit_+ '}'
+    : 'u' '{' HexDigit+ '}'
     ;
 
 fragment SingleEscapeCharacter
@@ -265,14 +292,10 @@ fragment EscapeCharacter
     ;
 
 fragment LineContinuation
-    : '\\' [\r\n\u2028\u2029]
+    : '\\' [\r\n\u2028\u2029]+
     ;
 
 fragment HexDigit
-    : [0-9a-fA-F]
-    ;
-
-fragment HexDigit_
     : [_0-9a-fA-F]
     ;
 

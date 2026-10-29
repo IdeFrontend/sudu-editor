@@ -1,7 +1,7 @@
 package org.sudu.experiments.parser.typescript.parser.highlighting;
 
 import org.antlr.v4.runtime.Token;
-import org.sudu.experiments.parser.typescript.gen.LightTypeScriptLexer;
+import org.sudu.experiments.parser.ecmascript.gen.LightEcmaScriptLexer;
 
 import java.util.List;
 
@@ -24,35 +24,110 @@ public class LightTypeScriptHighlighting {
   }
 
   private static boolean isSemi(int tokenType) {
-    return tokenType == LightTypeScriptLexer.SemiColon;
+    return tokenType == LightEcmaScriptLexer.SemiColon;
   }
 
   private static boolean isString(int tokenType) {
-    return tokenType == LightTypeScriptLexer.StringLiteral;
+    return tokenType == LightEcmaScriptLexer.StringLiteral;
   }
 
   private static boolean isKeyword(int tokenType) {
-    return tokenType >= LightTypeScriptLexer.Break
-        && tokenType <= LightTypeScriptLexer.Is;
+    return switch (tokenType) {
+      case LightEcmaScriptLexer.Break,
+           LightEcmaScriptLexer.Do,
+           LightEcmaScriptLexer.Instanceof,
+           LightEcmaScriptLexer.Typeof,
+           LightEcmaScriptLexer.Case,
+           LightEcmaScriptLexer.Else,
+           LightEcmaScriptLexer.New,
+           LightEcmaScriptLexer.Var,
+           LightEcmaScriptLexer.Catch,
+           LightEcmaScriptLexer.Finally,
+           LightEcmaScriptLexer.Return,
+           LightEcmaScriptLexer.Void,
+           LightEcmaScriptLexer.Continue,
+           LightEcmaScriptLexer.For,
+           LightEcmaScriptLexer.Switch,
+           LightEcmaScriptLexer.While,
+           LightEcmaScriptLexer.Debugger,
+           LightEcmaScriptLexer.Function_,
+           LightEcmaScriptLexer.This,
+           LightEcmaScriptLexer.With,
+           LightEcmaScriptLexer.Default,
+           LightEcmaScriptLexer.If,
+           LightEcmaScriptLexer.Throw,
+           LightEcmaScriptLexer.Delete,
+           LightEcmaScriptLexer.In,
+           LightEcmaScriptLexer.Try,
+           LightEcmaScriptLexer.As,
+           LightEcmaScriptLexer.From,
+           LightEcmaScriptLexer.ReadOnly,
+           LightEcmaScriptLexer.Async,
+           LightEcmaScriptLexer.Await,
+           LightEcmaScriptLexer.Yield,
+           LightEcmaScriptLexer.YieldStar,
+           LightEcmaScriptLexer.Class,
+           LightEcmaScriptLexer.Enum,
+           LightEcmaScriptLexer.Extends,
+           LightEcmaScriptLexer.Super,
+           LightEcmaScriptLexer.Const,
+           LightEcmaScriptLexer.Export,
+           LightEcmaScriptLexer.Import,
+           LightEcmaScriptLexer.Implements,
+           LightEcmaScriptLexer.Let,
+           LightEcmaScriptLexer.Private,
+           LightEcmaScriptLexer.Public,
+           LightEcmaScriptLexer.Interface,
+           LightEcmaScriptLexer.Package,
+           LightEcmaScriptLexer.Protected,
+           LightEcmaScriptLexer.Static,
+           LightEcmaScriptLexer.Any,
+           LightEcmaScriptLexer.Number,
+           LightEcmaScriptLexer.Never,
+           LightEcmaScriptLexer.Boolean,
+           LightEcmaScriptLexer.String,
+           LightEcmaScriptLexer.Unique,
+           LightEcmaScriptLexer.Symbol,
+           LightEcmaScriptLexer.Undefined,
+           LightEcmaScriptLexer.Object,
+           LightEcmaScriptLexer.Of,
+           LightEcmaScriptLexer.KeyOf,
+           LightEcmaScriptLexer.TypeAlias,
+           LightEcmaScriptLexer.Constructor,
+           LightEcmaScriptLexer.Namespace,
+           LightEcmaScriptLexer.Require,
+           LightEcmaScriptLexer.Module,
+           LightEcmaScriptLexer.Declare,
+           LightEcmaScriptLexer.Abstract,
+           LightEcmaScriptLexer.Is -> true;
+      default -> false;
+    };
   }
 
   private static boolean isNumeric(int tokenType) {
-    return tokenType >= LightTypeScriptLexer.DecimalLiteral
-        && tokenType <= LightTypeScriptLexer.BigDecimalIntegerLiteral;
+    return tokenType == LightEcmaScriptLexer.DecimalLiteral
+        || tokenType == LightEcmaScriptLexer.HexIntegerLiteral
+        || tokenType == LightEcmaScriptLexer.OctalIntegerLiteral
+        || tokenType == LightEcmaScriptLexer.OctalIntegerLiteral2
+        || tokenType == LightEcmaScriptLexer.BinaryIntegerLiteral
+        || tokenType == LightEcmaScriptLexer.BigHexIntegerLiteral
+        || tokenType == LightEcmaScriptLexer.BigOctalIntegerLiteral
+        || tokenType == LightEcmaScriptLexer.BigBinaryIntegerLiteral
+        || tokenType == LightEcmaScriptLexer.BigDecimalIntegerLiteral;
   }
 
   private static boolean isBoolean(int tokenType) {
-    return tokenType == LightTypeScriptLexer.BooleanLiteral;
+    return tokenType == LightEcmaScriptLexer.BooleanLiteral;
   }
 
   private static boolean isNull(int tokenType) {
-    return tokenType == LightTypeScriptLexer.NullLiteral;
+    return tokenType == LightEcmaScriptLexer.NullLiteral;
   }
 
   public static boolean isComment(int tokenType) {
-    return tokenType == LightTypeScriptLexer.MultiLineComment
-        || tokenType == LightTypeScriptLexer.SingleLineComment
-        || tokenType == LightTypeScriptLexer.HtmlComment
-        || tokenType == LightTypeScriptLexer.CDataComment;
+    return tokenType == LightEcmaScriptLexer.MultiLineComment
+        || tokenType == LightEcmaScriptLexer.SingleLineComment
+        || tokenType == LightEcmaScriptLexer.HtmlComment
+        || tokenType == LightEcmaScriptLexer.CDataComment;
   }
 }

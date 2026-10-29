@@ -2,8 +2,8 @@ package org.sudu.experiments.parser.javascript;
 
 import org.antlr.v4.runtime.Token;
 import org.sudu.experiments.parser.common.SplitRules;
+import org.sudu.experiments.parser.ecmascript.gen.LightEcmaScriptLexer;
 import org.sudu.experiments.parser.help.Helper;
-import org.sudu.experiments.parser.javascript.gen.LightJavaScriptLexer;
 
 import java.util.List;
 
@@ -19,16 +19,16 @@ public class JsSplitRules extends SplitRules {
 
   public static boolean isStringLiteral(Token token) {
     int type = token.getType();
-    return type == LightJavaScriptLexer.StringLiteral
-        || type == LightJavaScriptLexer.RegularExpressionLiteral;
+    return type == LightEcmaScriptLexer.StringLiteral
+        || type == LightEcmaScriptLexer.RegularExpressionLiteral;
   }
 
   public static boolean isMultiline(Token token) {
     int type = token.getType();
-    return type == LightJavaScriptLexer.MultiLineComment
-        || type == LightJavaScriptLexer.HtmlComment
-        || type == LightJavaScriptLexer.CDataComment
-        || type == LightJavaScriptLexer.StringLiteral;
+    return type == LightEcmaScriptLexer.MultiLineComment
+        || type == LightEcmaScriptLexer.HtmlComment
+        || type == LightEcmaScriptLexer.CDataComment
+        || type == LightEcmaScriptLexer.StringLiteral;
   }
 
 }
