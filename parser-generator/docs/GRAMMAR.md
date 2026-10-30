@@ -28,12 +28,14 @@ This project does not use stock ANTLR. Generation uses the local TeaVM-compatibl
 Every lexer grammar must define both of these:
 
 ```antlr
-NEW_LINE: '\r\n' | '\r' | '\n' -> channel(HIDDEN);
-ERROR:    .                    -> channel(HIDDEN);
+NEW_LINE: ('\r\n' | '\r' | '\n') -> channel(HIDDEN);
+ERROR:    .                      -> channel(HIDDEN);
 ```
 
 - There is **exactly one** `NEW_LINE` rule.
 - `NEW_LINE` always uses `-> channel(HIDDEN)`.
+- Wrap alternatives in parentheses so the channel command applies to the whole rule (ANTLR requires the `->` command on a single outermost alt).
+- The default pattern is `'\r\n' | '\r' | '\n'`. Languages that treat Unicode line separators as line terminators (EcmaScript) may also include `'\u2028'` and `'\u2029'` in `NEW_LINE`.
 - `ERROR` is the last lexer rule in the default mode (the catch-all). Place it after comments, whitespace, and `NEW_LINE`.
 - `ERROR` always uses `-> channel(HIDDEN)`, including helper lexers.
 

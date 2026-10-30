@@ -19,16 +19,16 @@ public class TsSplitRules extends SplitRules {
 
   private boolean isStringLiteral(Token token) {
     int type = token.getType();
-    return type == LightEcmaScriptLexer.StringLiteral
-        || type == LightEcmaScriptLexer.RegularExpressionLiteral;
+    return type == LightEcmaScriptLexer.STRING_LITERAL
+        || type == LightEcmaScriptLexer.REGULAR_EXPRESSION_LITERAL;
   }
 
   private boolean isMultiline(Token token) {
     int type = token.getType();
-    return type == LightEcmaScriptLexer.MultiLineComment
-        || type == LightEcmaScriptLexer.HtmlComment
-        || type == LightEcmaScriptLexer.CDataComment
-        || type == LightEcmaScriptLexer.StringLiteral;
+    return type == LightEcmaScriptLexer.MULTI_LINE_COMMENT
+        || type == LightEcmaScriptLexer.HTML_COMMENT
+        || type == LightEcmaScriptLexer.C_DATA_COMMENT
+        || type == LightEcmaScriptLexer.STRING_LITERAL;
   }
 
 }

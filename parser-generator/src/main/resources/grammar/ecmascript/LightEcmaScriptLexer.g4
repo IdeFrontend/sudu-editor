@@ -41,200 +41,200 @@ options {
     superClass = LightEcmaScriptLexerBase;
 }
 
-HashBangLine: '#!' ~[\r\n\u2028\u2029]* {this.isJavaScript()}?; // only allowed at start
-MultiLineComment:               '/*' .*? '*/'             -> channel(HIDDEN);
-SingleLineComment:              '//' ~[\r\n\u2028\u2029]* -> channel(HIDDEN);
-RegularExpressionLiteral:       '/' RegularExpressionFirstChar RegularExpressionChar* '/' IdentifierPart*;
+HASH_BANG_LINE: '#!' ~[\r\n\u2028\u2029]* {this.isJavaScript()}?; // only allowed at start
+MULTI_LINE_COMMENT:               '/*' .*? '*/'             -> channel(HIDDEN);
+SINGLE_LINE_COMMENT:              '//' ~[\r\n\u2028\u2029]* -> channel(HIDDEN);
+REGULAR_EXPRESSION_LITERAL:       '/' RegularExpressionFirstChar RegularExpressionChar* '/' IdentifierPart*;
 
-OpenBracket:                    '[';
-CloseBracket:                   ']';
-OpenParen:                      '(';
-CloseParen:                     ')';
-OpenBrace:                      '{';
-CloseBrace:                     '}';
-SemiColon:                      ';';
-Comma:                          ',';
-Assign:                         '=';
-QuestionMark:                   '?';
-QuestionMarkDot:                '?.';
-Colon:                          ':';
-Ellipsis:                       '...';
-Dot:                            '.';
-PlusPlus:                       '++';
-MinusMinus:                     '--';
-Plus:                           '+';
-Minus:                          '-';
-BitNot:                         '~';
-Not:                            '!';
-Multiply:                       '*';
-Divide:                         '/';
-Modulus:                        '%';
-Power:                          '**';
-NullCoalesce:                   '??';
-Hashtag:                        '#';
-RightShiftLogical:              '>>>' {this.isJavaScript()}?;
-RightShiftArithmetic:           '>>' {this.isJavaScript()}?;
-LeftShiftArithmetic:            '<<';
-LessThan:                       '<';
-MoreThan:                       '>';
-LessThanEquals:                 '<=';
-GreaterThanEquals:              '>=';
-Equals_:                        '==';
-NotEquals:                      '!=';
-IdentityEquals:                 '===';
-IdentityNotEquals:              '!==';
-BitAnd:                         '&';
-BitXOr:                         '^';
-BitOr:                          '|';
-And:                            '&&';
-Or:                             '||';
-MultiplyAssign:                 '*=';
-DivideAssign:                   '/=';
-ModulusAssign:                  '%=';
-PlusAssign:                     '+=';
-MinusAssign:                    '-=';
-LeftShiftArithmeticAssign:      '<<=';
-RightShiftArithmeticAssign:     '>>=';
-RightShiftLogicalAssign:        '>>>=';
-BitAndAssign:                   '&=';
-BitXorAssign:                   '^=';
-BitOrAssign:                    '|=';
-PowerAssign:                    '**=';
-NullishCoalescingAssign:        '??=' {this.isTypeScript()}?;
+OPEN_BRACKET:                    '[';
+CLOSE_BRACKET:                   ']';
+OPEN_PAREN:                      '(';
+CLOSE_PAREN:                     ')';
+OPEN_BRACE:                      '{';
+CLOSE_BRACE:                     '}';
+SEMI_COLON:                      ';';
+COMMA:                          ',';
+ASSIGN:                         '=';
+QUESTION_MARK:                   '?';
+QUESTION_MARK_DOT:                '?.';
+COLON:                          ':';
+ELLIPSIS:                       '...';
+DOT:                            '.';
+PLUS_PLUS:                       '++';
+MINUS_MINUS:                     '--';
+PLUS:                           '+';
+MINUS:                          '-';
+BIT_NOT:                         '~';
+NOT:                            '!';
+MULTIPLY:                       '*';
+DIVIDE:                         '/';
+MODULUS:                        '%';
+POWER:                          '**';
+NULL_COALESCE:                   '??';
+HASHTAG:                        '#';
+RIGHT_SHIFT_LOGICAL:              '>>>' {this.isJavaScript()}?;
+RIGHT_SHIFT_ARITHMETIC:           '>>' {this.isJavaScript()}?;
+LEFT_SHIFT_ARITHMETIC:            '<<';
+LESS_THAN:                       '<';
+MORE_THAN:                       '>';
+LESS_THAN_EQUALS:                 '<=';
+GREATER_THAN_EQUALS:              '>=';
+EQUALS_:                        '==';
+NOT_EQUALS:                      '!=';
+IDENTITY_EQUALS:                 '===';
+IDENTITY_NOT_EQUALS:              '!==';
+BIT_AND:                         '&';
+BIT_X_OR:                         '^';
+BIT_OR:                          '|';
+AND:                            '&&';
+OR:                             '||';
+MULTIPLY_ASSIGN:                 '*=';
+DIVIDE_ASSIGN:                   '/=';
+MODULUS_ASSIGN:                  '%=';
+PLUS_ASSIGN:                     '+=';
+MINUS_ASSIGN:                    '-=';
+LEFT_SHIFT_ARITHMETIC_ASSIGN:      '<<=';
+RIGHT_SHIFT_ARITHMETIC_ASSIGN:     '>>=';
+RIGHT_SHIFT_LOGICAL_ASSIGN:        '>>>=';
+BIT_AND_ASSIGN:                   '&=';
+BIT_XOR_ASSIGN:                   '^=';
+BIT_OR_ASSIGN:                    '|=';
+POWER_ASSIGN:                    '**=';
+NULLISH_COALESCING_ASSIGN:        '??=' {this.isTypeScript()}?;
 ARROW:                          '=>';
 
 /// Null Literals
 
-NullLiteral:                    'null';
+NULL_LITERAL:                    'null';
 
-/// Boolean Literals
+/// BOOLEAN Literals
 
-BooleanLiteral:                 'true'
+BOOLEAN_LITERAL:                 'true'
               |                 'false';
 
 /// Numeric Literals
 
-DecimalLiteral:                 DecimalIntegerLiteral '.' [0-9] [0-9_]* ExponentPart?
+DECIMAL_LITERAL:                 DecimalIntegerLiteral '.' [0-9] [0-9_]* ExponentPart?
               |                 '.' [0-9] [0-9_]* ExponentPart?
               |                 DecimalIntegerLiteral ExponentPart?
               ;
 
-HexIntegerLiteral:              '0' [xX] [0-9a-fA-F] HexDigit*;
-OctalIntegerLiteral:            '0' [0-7]+;
-OctalIntegerLiteral2:           '0' [oO] [0-7] [_0-7]*;
-BinaryIntegerLiteral:           '0' [bB] [01] [_01]*;
+HEX_INTEGER_LITERAL:              '0' [xX] [0-9a-fA-F] HexDigit*;
+OCTAL_INTEGER_LITERAL:            '0' [0-7]+;
+OCTAL_INTEGER_LITERAL2:           '0' [oO] [0-7] [_0-7]*;
+BINARY_INTEGER_LITERAL:           '0' [bB] [01] [_01]*;
 
-BigHexIntegerLiteral:           '0' [xX] [0-9a-fA-F] HexDigit* 'n';
-BigOctalIntegerLiteral:         '0' [oO] [0-7] [_0-7]* 'n';
-BigBinaryIntegerLiteral:        '0' [bB] [01] [_01]* 'n';
-BigDecimalIntegerLiteral:       DecimalIntegerLiteral 'n';
+BIG_HEX_INTEGER_LITERAL:           '0' [xX] [0-9a-fA-F] HexDigit* 'n';
+BIG_OCTAL_INTEGER_LITERAL:         '0' [oO] [0-7] [_0-7]* 'n';
+BIG_BINARY_INTEGER_LITERAL:        '0' [bB] [01] [_01]* 'n';
+BIG_DECIMAL_INTEGER_LITERAL:       DecimalIntegerLiteral 'n';
 
-Color
+COLOR
     : '#' HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit {this.isJavaScript()}?
     | '#' HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit HexDigit {this.isJavaScript()}?
     ;
 
 /// Keywords
 
-Break:                          'break';
-Do:                             'do';
-Instanceof:                     'instanceof';
-Typeof:                         'typeof';
-Case:                           'case';
-Else:                           'else';
-New:                            'new';
-Var:                            'var';
-Catch:                          'catch';
-Finally:                        'finally';
-Return:                         'return';
-Void:                           'void';
-Continue:                       'continue';
-For:                            'for';
-Switch:                         'switch';
-While:                          'while';
-Debugger:                       'debugger';
-Function_:                      'function';
-This:                           'this';
-With:                           'with';
-Default:                        'default';
-If:                             'if';
-Throw:                          'throw';
-Delete:                         'delete';
-In:                             'in';
-Try:                            'try';
-As:                             'as';
-From:                           'from';
-ReadOnly:                       'readonly' {this.isTypeScript()}?;
-Async:                          'async';
-Await:                          'await';
-Yield:                          'yield';
-YieldStar:                      'yield*' {this.isTypeScript()}?;
+BREAK:                          'break';
+DO:                             'do';
+INSTANCEOF:                     'instanceof';
+TYPEOF:                         'typeof';
+CASE:                           'case';
+ELSE:                           'else';
+NEW:                            'new';
+VAR:                            'var';
+CATCH:                          'catch';
+FINALLY:                        'finally';
+RETURN:                         'return';
+VOID:                           'void';
+CONTINUE:                       'continue';
+FOR:                            'for';
+SWITCH:                         'switch';
+WHILE:                          'while';
+DEBUGGER:                       'debugger';
+FUNCTION_:                      'function';
+THIS:                           'this';
+WITH:                           'with';
+DEFAULT:                        'default';
+IF:                             'if';
+THROW:                          'throw';
+DELETE:                         'delete';
+IN:                             'in';
+TRY:                            'try';
+AS:                             'as';
+FROM:                           'from';
+READ_ONLY:                       'readonly' {this.isTypeScript()}?;
+ASYNC:                          'async';
+AWAIT:                          'await';
+YIELD:                          'yield';
+YIELD_STAR:                      'yield*' {this.isTypeScript()}?;
 
 /// Future Reserved Words
 
-Class:                          'class';
-Enum:                           'enum';
-Extends:                        'extends';
-Super:                          'super';
-Const:                          'const';
-Export:                         'export';
-Import:                         'import';
+CLASS:                          'class';
+ENUM:                           'enum';
+EXTENDS:                        'extends';
+SUPER:                          'super';
+CONST:                          'const';
+EXPORT:                         'export';
+IMPORT:                         'import';
 
 /// The following tokens are also considered to be FutureReservedWords
 /// when parsing strict mode
 
-Implements:                     'implements';
-Let:                            'let';
-Private:                        'private';
-Public:                         'public';
-Interface:                      'interface';
-Package:                        'package';
-Protected:                      'protected';
-Static:                         'static';
+IMPLEMENTS:                     'implements';
+LET:                            'let';
+PRIVATE:                        'private';
+PUBLIC:                         'public';
+INTERFACE:                      'interface';
+PACKAGE:                        'package';
+PROTECTED:                      'protected';
+STATIC:                         'static';
 
 // TypeScript-only keywords
-Any:                            'any' {this.isTypeScript()}?;
-Number:                         'number' {this.isTypeScript()}?;
-Never:                          'never' {this.isTypeScript()}?;
-Boolean:                        'boolean' {this.isTypeScript()}?;
-String:                         'string' {this.isTypeScript()}?;
-Unique:                         'unique' {this.isTypeScript()}?;
-Symbol:                         'symbol' {this.isTypeScript()}?;
-Undefined:                      'undefined' {this.isTypeScript()}?;
-Object:                         'object' {this.isTypeScript()}?;
-Of:                             'of' {this.isTypeScript()}?;
-KeyOf:                          'keyof' {this.isTypeScript()}?;
-TypeAlias:                      'type' {this.isTypeScript()}?;
-Constructor:                    'constructor' {this.isTypeScript()}?;
-Namespace:                      'namespace' {this.isTypeScript()}?;
-Require:                        'require' {this.isTypeScript()}?;
-Module:                         'module' {this.isTypeScript()}?;
-Declare:                        'declare' {this.isTypeScript()}?;
-Abstract:                       'abstract' {this.isTypeScript()}?;
-Is:                             'is' {this.isTypeScript()}?;
+ANY:                            'any' {this.isTypeScript()}?;
+NUMBER:                         'number' {this.isTypeScript()}?;
+NEVER:                          'never' {this.isTypeScript()}?;
+BOOLEAN:                        'boolean' {this.isTypeScript()}?;
+STRING:                         'string' {this.isTypeScript()}?;
+UNIQUE:                         'unique' {this.isTypeScript()}?;
+SYMBOL:                         'symbol' {this.isTypeScript()}?;
+UNDEFINED:                      'undefined' {this.isTypeScript()}?;
+OBJECT:                         'object' {this.isTypeScript()}?;
+OF:                             'of' {this.isTypeScript()}?;
+KEY_OF:                          'keyof' {this.isTypeScript()}?;
+TYPE_ALIAS:                      'type' {this.isTypeScript()}?;
+CONSTRUCTOR:                    'constructor' {this.isTypeScript()}?;
+NAMESPACE:                      'namespace' {this.isTypeScript()}?;
+REQUIRE:                        'require' {this.isTypeScript()}?;
+MODULE:                         'module' {this.isTypeScript()}?;
+DECLARE:                        'declare' {this.isTypeScript()}?;
+ABSTRACT:                       'abstract' {this.isTypeScript()}?;
+IS:                             'is' {this.isTypeScript()}?;
 
 // Decorators
-At:                             '@' {this.isTypeScript()}?;
+AT:                             '@' {this.isTypeScript()}?;
 
-/// Identifier Names and Identifiers
+/// IDENTIFIER Names and Identifiers
 
-Identifier:                     IdentifierStart IdentifierPart*;
+IDENTIFIER:                     IdentifierStart IdentifierPart*;
 
-/// String Literals
-StringLiteral:                  ('"' DoubleStringCharacter* '"'
+/// STRING Literals
+STRING_LITERAL:                  ('"' DoubleStringCharacter* '"'
              |                  '\'' SingleStringCharacter* '\'')
              ;
 
-BackTick:                       '`';
+BACK_TICK:                       '`';
 
-WhiteSpaces:                    [\t\u000B\u000C\u0020\u00A0]+ -> channel(HIDDEN);
+WHITE_SPACES:                    [\t\u000B\u000C\u0020\u00A0]+ -> channel(HIDDEN);
 
-LineTerminator:                 [\r\n\u2028\u2029] -> channel(HIDDEN);
+NEW_LINE:                       ('\r\n' | '\r' | '\n' | '\u2028' | '\u2029') -> channel(HIDDEN);
 
 /// Comments
 
-HtmlComment:                    '<!--' .*? '-->' -> channel(HIDDEN);
-CDataComment:                   '<![CDATA[' .*? ']]>' -> channel(HIDDEN);
+HTML_COMMENT:                    '<!--' .*? '-->' -> channel(HIDDEN);
+C_DATA_COMMENT:                   '<![CDATA[' .*? ']]>' -> channel(HIDDEN);
 ERROR:                          . -> channel(HIDDEN);
 
 // Fragment rules

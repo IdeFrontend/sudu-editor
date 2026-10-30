@@ -31,7 +31,7 @@ public class PythonLexer extends PythonLexerBase {
 		RIGHT_SHIFT_ASSIGN=80, POWER_ASSIGN=81, IDIV_ASSIGN=82, STRING=83, MULTILINE_STRING=84, 
 		DECIMAL_INTEGER=85, OCT_INTEGER=86, HEX_INTEGER=87, BIN_INTEGER=88, IMAG_NUMBER=89, 
 		FLOAT_NUMBER=90, OPEN_PAREN=91, CLOSE_PAREN=92, OPEN_BRACE=93, CLOSE_BRACE=94, 
-		OPEN_BRACKET=95, CLOSE_BRACKET=96, NAME=97, LINE_JOIN=98, NEWLINE=99, 
+		OPEN_BRACKET=95, CLOSE_BRACKET=96, NAME=97, LINE_JOIN=98, NEW_LINE=99, 
 		WS=100, COMMENT=101, ERROR=102;
 	public static String[] channelNames = {
 		"DEFAULT_TOKEN_CHANNEL", "HIDDEN"
@@ -57,11 +57,10 @@ public class PythonLexer extends PythonLexerBase {
 			"STRING", "MULTILINE_STRING", "DECIMAL_INTEGER", "OCT_INTEGER", "HEX_INTEGER", 
 			"BIN_INTEGER", "IMAG_NUMBER", "FLOAT_NUMBER", "OPEN_PAREN", "CLOSE_PAREN", 
 			"OPEN_BRACE", "CLOSE_BRACE", "OPEN_BRACKET", "CLOSE_BRACKET", "NAME", 
-			"LINE_JOIN", "NEWLINE", "WS", "COMMENT", "ERROR", "SHORT_STRING", "LONG_STRING", 
-			"LONG_STRING_ITEM", "RN", "EXPONENT_OR_POINT_FLOAT", "POINT_FLOAT", "SHORT_BYTES", 
-			"LONG_BYTES", "LONG_BYTES_ITEM", "SHORT_BYTES_CHAR_NO_SINGLE_QUOTE", 
-			"SHORT_BYTES_CHAR_NO_DOUBLE_QUOTE", "LONG_BYTES_CHAR", "BYTES_ESCAPE_SEQ", 
-			"ID_CONTINUE", "ID_START"
+			"LINE_JOIN", "NEW_LINE", "WS", "COMMENT", "ERROR", "ShortString", "LongString", 
+			"LongStringItem", "Rn", "ExponentOrPointFloat", "PointFloat", "ShortBytes", 
+			"LongBytes", "LongBytesItem", "ShortBytesCharNoSingleQuote", "ShortBytesCharNoDoubleQuote", 
+			"LongBytesChar", "BytesEscapeSeq", "IdContinue", "IdStart"
 		};
 	}
 	public static final String[] ruleNames = makeRuleNames();
@@ -99,7 +98,7 @@ public class PythonLexer extends PythonLexerBase {
 			"POWER_ASSIGN", "IDIV_ASSIGN", "STRING", "MULTILINE_STRING", "DECIMAL_INTEGER", 
 			"OCT_INTEGER", "HEX_INTEGER", "BIN_INTEGER", "IMAG_NUMBER", "FLOAT_NUMBER", 
 			"OPEN_PAREN", "CLOSE_PAREN", "OPEN_BRACE", "CLOSE_BRACE", "OPEN_BRACKET", 
-			"CLOSE_BRACKET", "NAME", "LINE_JOIN", "NEWLINE", "WS", "COMMENT", "ERROR"
+			"CLOSE_BRACKET", "NAME", "LINE_JOIN", "NEW_LINE", "WS", "COMMENT", "ERROR"
 		};
 	}
 	private static final String[] _SYMBOLIC_NAMES = makeSymbolicNames();
@@ -188,7 +187,7 @@ public class PythonLexer extends PythonLexerBase {
 			break;
 
 		case 95:
-			NEWLINE_action((RuleContext)_localctx, actionIndex);
+			NEW_LINE_action((RuleContext)_localctx, actionIndex);
 			break;
 
 		case 96:
@@ -238,7 +237,7 @@ public class PythonLexer extends PythonLexerBase {
 			break;
 		}
 	}
-	private void NEWLINE_action(RuleContext _localctx, int actionIndex) {
+	private void NEW_LINE_action(RuleContext _localctx, int actionIndex) {
 		switch (actionIndex) {
 		case 6:
 			this.HandleNewLine();

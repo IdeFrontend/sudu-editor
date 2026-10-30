@@ -44,15 +44,18 @@ DTD: '<!' .*? '>';
 
 SCRIPTLET: '<?' .*? '?>' | '<%' .*? '%>';
 
-SEA_WS: (' ' | '\t')+;
+SEA_WS: [ \t]+;
 
 SCRIPT_OPEN: '<script' .*? '>' -> pushMode(SCRIPT);
 STYLE_OPEN: '<style' .*? '>' -> pushMode(STYLE);
-SEA_NEW_LINE : ('\r'? '\n' | '\r');
 
 TAG_OPEN: '<' -> pushMode(TAG);
 
 HTML_TEXT: ~[<\n\r]+;
+
+NEW_LINE: ('\r\n' | '\r' | '\n') -> channel(HIDDEN);
+
+ERROR: . -> channel(HIDDEN);
 
 // tag declarations
 
@@ -71,9 +74,10 @@ TAG_EQUALS: '=' -> pushMode(ATTVALUE);
 TAG_NAME: TAG_NameStartChar TAG_NameChar*;
 
 TAG_WHITESPACE: [ \t] -> channel(HIDDEN);
-TAG_NEW_LINE : ('\r'? '\n' | '\r') -> channel(HIDDEN);
 
-ERROR: . -> channel(HIDDEN);
+TAG_NEW_LINE: ('\r\n' | '\r' | '\n') -> type(NEW_LINE), channel(HIDDEN);
+
+TAG_ERROR: . -> type(ERROR), channel(HIDDEN);
 
 fragment HEXDIGIT: [a-fA-F0-9];
 
@@ -123,6 +127,10 @@ mode ATTVALUE;
 ATTVALUE_VALUE: ' '* ATTRIBUTE -> popMode;
 
 ATTRIBUTE: DOUBLE_QUOTE_STRING | SINGLE_QUOTE_STRING | ATTCHARS | HEXCHARS | DECCHARS;
+
+ATTVALUE_NEW_LINE: ('\r\n' | '\r' | '\n') -> type(NEW_LINE), channel(HIDDEN);
+
+ATTVALUE_ERROR: . -> type(ERROR), channel(HIDDEN);
 
 fragment ATTCHARS: ATTCHAR+ ' '?;
 
