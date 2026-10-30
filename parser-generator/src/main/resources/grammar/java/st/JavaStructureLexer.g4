@@ -17,7 +17,7 @@ RECORD:             'record' Skipable+ IDENTIFIER (Skipable* DIAMONDS)?;
 WS:                 [ \t\u000C]+ -> channel(HIDDEN);
 COMMENT:            '/*' .*? '*/'    -> channel(HIDDEN);
 LINE_COMMENT:       '//' ~[\r\n]*    -> channel(HIDDEN);
-NEW_LINE:           '\r'? '\n' ->  channel(HIDDEN);
+NEW_LINE:           ('\r\n' | '\r' | '\n') -> channel(HIDDEN);
 
 STRING_LITERAL:     '"' (~["\\\r\n] | EscapeSequence)* '"' -> channel(HIDDEN);
 CHAR_LITERAL:       '\'' (~['\\\r\n] | EscapeSequence) '\'' -> channel(HIDDEN);
@@ -46,7 +46,7 @@ MODIFIER
 
 IDENTIFIER:         Letter LetterOrDigit* -> channel(HIDDEN);
 
-ANY:                . -> channel(HIDDEN);
+ERROR:              . -> channel(HIDDEN);
 
 fragment QualifiedName
     : IDENTIFIER (Skipable* '.' Skipable* IDENTIFIER)*?;
