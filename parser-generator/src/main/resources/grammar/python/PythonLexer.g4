@@ -174,7 +174,7 @@ fragment LongString: '\'\'\'' LongStringItem*? '\'\'\'' | '"""' LongStringItem*?
 
 fragment LongStringItem: ~'\\' | '\\' (Rn | .);
 
-fragment Rn: '\r'? '\n';
+fragment Rn: '\r\n' | '\r' | '\n';
 
 fragment ExponentOrPointFloat: ([0-9]+ | PointFloat) [eE] [+-]? [0-9]+ | PointFloat;
 
