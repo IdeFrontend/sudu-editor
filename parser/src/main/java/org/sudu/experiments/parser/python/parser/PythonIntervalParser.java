@@ -65,6 +65,6 @@ public class PythonIntervalParser extends BaseIntervalParser<NullParser> {
 
   @Override
   protected void highlightTokens() {
-    PythonHighlighting.highlightTokens(allTokens, tokenTypes);
+    PythonHighlighting.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 }

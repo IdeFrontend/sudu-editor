@@ -64,7 +64,7 @@ public class JavaFullParser extends BaseFullParser<JavaParser> {
 
   @Override
   protected void highlightTokens() {
-    JavaLexerHighlighting.highlightCommentTokens(allTokens, tokenTypes, tokenStyles);
+    JavaLexerHighlighting.COMMENT_INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 
   public JavaClass getJavaClass() {
