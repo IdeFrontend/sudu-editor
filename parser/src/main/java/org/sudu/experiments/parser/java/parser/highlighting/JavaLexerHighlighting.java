@@ -33,4 +33,9 @@ public class JavaLexerHighlighting extends Highlighting {
     );
     addErrorRule(JavaLexer.ERROR);
   }
+
+  // Tokens from MODULE to VAR can be used as identifiers; highlight as keywords only in keyword positions.
+  public static boolean isKeywordIdentifier(int type) {
+    return type >= JavaLexer.MODULE && type <= JavaLexer.VAR;
+  }
 }

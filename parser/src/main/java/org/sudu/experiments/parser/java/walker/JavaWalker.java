@@ -309,6 +309,15 @@ public class JavaWalker extends JavaParserBaseListener {
   }
 
   @Override
+  public void visitTerminal(TerminalNode node) {
+    super.visitTerminal(node);
+    var token = node.getSymbol();
+    int type = token.getType();
+    // Lexer highlighting skips MODULE..VAR; mark them as keywords when not used as identifiers.
+    if (isKeywordIdentifier(type) && !isIdentifier(node)) tokenTypes[token.getTokenIndex()] = KEYWORD;
+  }
+
+  @Override
   public void visitErrorNode(ErrorNode node) {
     super.visitErrorNode(node);
     var token = node.getSymbol();
