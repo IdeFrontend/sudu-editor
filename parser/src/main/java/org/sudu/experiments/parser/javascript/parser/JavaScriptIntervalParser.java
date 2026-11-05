@@ -62,10 +62,6 @@ public class JavaScriptIntervalParser extends BaseIntervalParser<NullParser> {
     LightJavaScriptLexerHighlighting.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 
-  public static boolean isComment(int tokenType) {
-    return LightJavaScriptLexerHighlighting.isComment(tokenType);
-  }
-
   @Override
   protected void walkScopes(ParserRuleContext startRule, ScopeWalker scopeWalker) {
 

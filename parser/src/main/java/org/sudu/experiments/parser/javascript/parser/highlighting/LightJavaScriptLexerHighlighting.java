@@ -21,21 +21,12 @@ public class LightJavaScriptLexerHighlighting extends Highlighting {
         // Numeric
         LightEcmaScriptLexer.DECIMAL_LITERAL, LightEcmaScriptLexer.COLOR, NUMERIC,
         // Keyword
-        LightEcmaScriptLexer.BREAK, LightEcmaScriptLexer.TRY, KEYWORD,
-        LightEcmaScriptLexer.ASYNC, LightEcmaScriptLexer.YIELD, KEYWORD,
-        LightEcmaScriptLexer.CLASS, LightEcmaScriptLexer.STATIC, KEYWORD,
+        LightEcmaScriptLexer.BREAK, LightEcmaScriptLexer.STATIC, KEYWORD,
         // String
         LightEcmaScriptLexer.STRING_LITERAL, LightEcmaScriptLexer.BACK_TICK, STRING,
         // Semi
         LightEcmaScriptLexer.SEMI_COLON, LightEcmaScriptLexer.COMMA, SEMI
     );
     addErrorRule(LightEcmaScriptLexer.ERROR);
-  }
-
-  public static boolean isComment(int tokenType) {
-    return tokenType == LightEcmaScriptLexer.HTML_COMMENT
-        || tokenType == LightEcmaScriptLexer.C_DATA_COMMENT
-        || tokenType == LightEcmaScriptLexer.MULTI_LINE_COMMENT
-        || tokenType == LightEcmaScriptLexer.SINGLE_LINE_COMMENT;
   }
 }

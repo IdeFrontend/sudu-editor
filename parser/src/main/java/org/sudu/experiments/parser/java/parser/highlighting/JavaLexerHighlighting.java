@@ -8,7 +8,6 @@ import static org.sudu.experiments.parser.ParserConstants.TokenTypes.*;
 public class JavaLexerHighlighting extends Highlighting {
 
   public static final Highlighting INSTANCE = new JavaLexerHighlighting();
-  public static final Highlighting COMMENT_INSTANCE = new JavaCommentHighlighting();
 
   private JavaLexerHighlighting() {
     addRules(
@@ -33,49 +32,5 @@ public class JavaLexerHighlighting extends Highlighting {
         JavaLexer.JAVADOC, JavaLexer.JAVADOC, DOCUMENTATION
     );
     addErrorRule(JavaLexer.ERROR);
-  }
-
-  // Tokens from MODULE to VAR can be used as identifiers
-  public static boolean isKeyword(int type) {
-    return (type >= JavaLexer.ABSTRACT && type <= JavaLexer.WHILE)
-        || (type >= JavaLexer.YIELD && type <= JavaLexer.NON_SEALED);
-  }
-
-  public static boolean isKeywordIdentifier(int type) {
-    return type >= JavaLexer.MODULE && type <= JavaLexer.VAR;
-  }
-
-  public static boolean isNumeric(int type) {
-    return type >= JavaLexer.DECIMAL_LITERAL && type <= JavaLexer.HEX_FLOAT_LITERAL;
-  }
-
-  public static boolean isBooleanLiteral(int type) {
-    return type == JavaLexer.BOOL_LITERAL;
-  }
-
-  public static boolean isStringOrChar(int type) {
-    return type >= JavaLexer.CHAR_LITERAL && type <= JavaLexer.TEXT_BLOCK;
-  }
-
-  public static boolean isNull(int type) {
-    return type == JavaLexer.NULL_LITERAL;
-  }
-
-  public static boolean isSemi(int type) {
-    return type == JavaLexer.SEMI || type == JavaLexer.COMMA;
-  }
-
-  public static boolean isAT(int type) {
-    return type == JavaLexer.AT;
-  }
-
-  private static class JavaCommentHighlighting extends Highlighting {
-    private JavaCommentHighlighting() {
-      addRules(
-          JavaLexer.JAVADOC, JavaLexer.JAVADOC, DOCUMENTATION,
-          JavaLexer.COMMENT, JavaLexer.LINE_COMMENT, COMMENT
-      );
-      addErrorRule(JavaLexer.ERROR);
-    }
   }
 }
