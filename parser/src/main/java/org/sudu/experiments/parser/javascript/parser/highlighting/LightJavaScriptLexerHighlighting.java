@@ -20,8 +20,10 @@ public class LightJavaScriptLexerHighlighting extends Highlighting {
         LightEcmaScriptLexer.BOOLEAN_LITERAL, LightEcmaScriptLexer.BOOLEAN_LITERAL, BOOLEAN,
         // Numeric
         LightEcmaScriptLexer.DECIMAL_LITERAL, LightEcmaScriptLexer.COLOR, NUMERIC,
-        // Keyword
-        LightEcmaScriptLexer.BREAK, LightEcmaScriptLexer.STATIC, KEYWORD,
+        // Keyword (skip TS-only AS/FROM/READ_ONLY and YIELD_STAR between shared tokens)
+        LightEcmaScriptLexer.BREAK, LightEcmaScriptLexer.TRY, KEYWORD,
+        LightEcmaScriptLexer.ASYNC, LightEcmaScriptLexer.YIELD, KEYWORD,
+        LightEcmaScriptLexer.CLASS, LightEcmaScriptLexer.STATIC, KEYWORD,
         // String
         LightEcmaScriptLexer.STRING_LITERAL, LightEcmaScriptLexer.BACK_TICK, STRING,
         // Semi
