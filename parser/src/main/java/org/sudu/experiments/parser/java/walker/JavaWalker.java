@@ -11,6 +11,7 @@ import org.sudu.experiments.parser.java.gen.JavaParserBaseListener;
 import org.sudu.experiments.parser.java.model.JavaBlock;
 import org.sudu.experiments.parser.java.model.JavaClass;
 import org.sudu.experiments.parser.common.TypedDecl;
+import org.sudu.experiments.parser.java.parser.highlighting.JavaLexerHighlighting;
 
 import static org.sudu.experiments.parser.ParserConstants.*;
 import static org.sudu.experiments.parser.ParserConstants.TokenTypes.*;
@@ -311,15 +312,9 @@ public class JavaWalker extends JavaParserBaseListener {
   public void visitTerminal(TerminalNode node) {
     super.visitTerminal(node);
     var token = node.getSymbol();
-    int ind = token.getTokenIndex();
     int type = token.getType();
-    if (isKeyword(type) || (isKeywordIdentifier(type) && !isIdentifier(node))) tokenTypes[ind] = KEYWORD;
-    else if (isNumeric(type)) tokenTypes[ind] = NUMERIC;
-    else if (isBooleanLiteral(type)) tokenTypes[ind] = BOOLEAN;
-    else if (isStringOrChar(type)) tokenTypes[ind] = STRING;
-    else if (isNull(type)) tokenTypes[ind] = NULL;
-    else if (isSemi(type)) tokenTypes[ind] = SEMI;
-    else if (isAT(type)) tokenTypes[ind] = ANNOTATION;
+    // Lexer highlighting skips MODULE..VAR; mark them as keywords when not used as identifiers.
+    if (isKeywordIdentifier(type) && !isIdentifier(node)) tokenTypes[token.getTokenIndex()] = KEYWORD;
   }
 
   @Override

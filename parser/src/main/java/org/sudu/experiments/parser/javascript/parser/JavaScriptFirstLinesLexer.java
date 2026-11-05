@@ -13,7 +13,7 @@ public class JavaScriptFirstLinesLexer extends BaseFirstLinesLexer<NullParser> {
 
   @Override
   protected void highlightTokens() {
-    LightJavaScriptLexerHighlighting.highlightTokens(allTokens, tokenTypes);
+    LightJavaScriptLexerHighlighting.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 
   @Override

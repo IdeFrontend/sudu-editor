@@ -38,7 +38,8 @@ public class HtmlSplitRules extends SplitRules {
 
     var allTokens = scriptStream.getTokens();
     int[] tokenTypes = new int[allTokens.size()];
-    LightJavaScriptLexerHighlighting.highlightTokens(allTokens, tokenTypes);
+    int[] tokenStyles = new int[allTokens.size()];
+    LightJavaScriptLexerHighlighting.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
 
     var result = new ArrayList<Token>();
 

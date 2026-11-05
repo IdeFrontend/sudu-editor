@@ -29,6 +29,6 @@ public class PythonFirstLinesLexer extends BaseFirstLinesLexer<NullParser> {
 
   @Override
   protected void highlightTokens() {
-    PythonHighlighting.highlightTokens(allTokens, tokenTypes);
+    PythonHighlighting.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 }

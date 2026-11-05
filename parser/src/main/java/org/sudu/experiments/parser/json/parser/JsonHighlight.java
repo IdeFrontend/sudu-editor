@@ -1,49 +1,29 @@
 package org.sudu.experiments.parser.json.parser;
 
-import org.antlr.v4.runtime.Token;
-import org.sudu.experiments.parser.ParserConstants;
+import org.sudu.experiments.parser.common.Highlighting;
 import org.sudu.experiments.parser.json.gen.JsonLexer;
 
-import java.util.List;
+import static org.sudu.experiments.parser.ParserConstants.TokenTypes.*;
 
-public class JsonHighlight {
+public class JsonHighlight extends Highlighting {
 
-  static void highlightTokens(List<Token> allTokens, int[] tokenTypes) {
-    for (var token: allTokens) {
-      int type = token.getType();
-      int ind = token.getTokenIndex();
-      if (isBoolean(type)) tokenTypes[ind] = ParserConstants.TokenTypes.BOOLEAN;
-      else if (isNumber(type)) tokenTypes[ind] = ParserConstants.TokenTypes.NUMERIC;
-      else if (isNull(type)) tokenTypes[ind] = ParserConstants.TokenTypes.NULL;
-      else if (isString(type)) tokenTypes[ind] = ParserConstants.TokenTypes.STRING;
-      else if (isCommaOrColon(type)) tokenTypes[ind] = ParserConstants.TokenTypes.SEMI;
-      else if (isComment(type)) tokenTypes[ind] = ParserConstants.TokenTypes.COMMENT;
-    }
-  }
+  public static final Highlighting INSTANCE = new JsonHighlight();
 
-  static boolean isBoolean(int type) {
-    return type == JsonLexer.BOOLEAN;
-  }
-
-  static boolean isNumber(int type) {
-    return type == JsonLexer.NUMBER;
-  }
-
-  static boolean isNull(int type) {
-    return type == JsonLexer.NULL;
-  }
-
-  static boolean isString(int type) {
-    return type == JsonLexer.STRING;
-  }
-
-  static boolean isCommaOrColon(int type) {
-    return type == JsonLexer.COMMA
-        || type == JsonLexer.COLON;
-  }
-
-  static boolean isComment(int type) {
-    return type == JsonLexer.COMMENT
-        || type == JsonLexer.LINE_COMMENT;
+  private JsonHighlight() {
+    addRules(
+        // String
+        JsonLexer.STRING, JsonLexer.STRING, STRING,
+        // Numeric
+        JsonLexer.NUMBER, JsonLexer.NUMBER, NUMERIC,
+        // Boolean
+        JsonLexer.BOOLEAN, JsonLexer.BOOLEAN, BOOLEAN,
+        // Null
+        JsonLexer.NULL, JsonLexer.NULL, NULL,
+        // Semi
+        JsonLexer.COMMA, JsonLexer.COLON, SEMI,
+        // Comment
+        JsonLexer.COMMENT, JsonLexer.LINE_COMMENT, COMMENT
+    );
+    addErrorRule(JsonLexer.ERROR);
   }
 }
