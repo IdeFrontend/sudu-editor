@@ -12,6 +12,7 @@ import org.sudu.experiments.parser.help.Helper;
 import org.sudu.experiments.parser.html.HtmlSplitRules;
 import org.sudu.experiments.parser.html.gen.HTMLLexer;
 import org.sudu.experiments.parser.html.gen.HTMLParser;
+import org.sudu.experiments.parser.html.parser.highlighting.HtmlHighlight;
 
 public class HtmlFullParser extends BaseFullParser<HTMLParser> {
 
@@ -50,7 +51,7 @@ public class HtmlFullParser extends BaseFullParser<HTMLParser> {
 
   @Override
   protected void highlightTokens() {
-    HtmlHighlight.highlightTokens(allTokens, tokenTypes);
+    HtmlHighlight.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 
 }

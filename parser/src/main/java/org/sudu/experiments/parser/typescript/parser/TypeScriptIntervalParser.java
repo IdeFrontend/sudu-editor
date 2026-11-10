@@ -67,6 +67,6 @@ public class TypeScriptIntervalParser extends BaseIntervalParser<NullParser> {
 
   @Override
   protected void highlightTokens() {
-    LightTypeScriptHighlighting.highlightTokens(allTokens, tokenTypes);
+    LightTypeScriptHighlighting.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 }
