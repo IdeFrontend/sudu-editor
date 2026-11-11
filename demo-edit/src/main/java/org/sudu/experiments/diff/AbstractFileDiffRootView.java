@@ -27,9 +27,9 @@ abstract class AbstractFileDiffRootView extends ViewArray
     this.isCodeReview = isCodeReview;
   }
 
-  abstract EditorComponent editor();
+  abstract EditorUi.FontApi fontApi();
 
-  abstract EditorComponent editorForSide(boolean left);
+  abstract EditorComponent editor(boolean left);
 
   abstract void attachEditors(FileDiffModel model);
 
@@ -67,28 +67,24 @@ abstract class AbstractFileDiffRootView extends ViewArray
   }
 
   protected void clearViewDiff() {
-    EditorComponent left = editorForSide(true);
-    EditorComponent right = editorForSide(false);
+    EditorComponent left = editor(true);
+    EditorComponent right = editor(false);
     if (left != null) left.setDiffModel(null);
     if (right != null && right != left) right.setDiffModel(null);
   }
 
   public void setReadonly(boolean leftReadonly, boolean rightReadonly) {
-    EditorComponent left = editorForSide(true);
-    EditorComponent right = editorForSide(false);
+    EditorComponent left = editor(true);
+    EditorComponent right = editor(false);
     if (left != null) left.readonly = leftReadonly;
     if (right != null) right.readonly = rightReadonly;
   }
 
   public void setDisableParser(boolean disableParser) {
-    EditorComponent left = editorForSide(true);
-    EditorComponent right = editorForSide(false);
+    EditorComponent left = editor(true);
+    EditorComponent right = editor(false);
     if (left != null) left.setDisableParser(disableParser);
     if (right != null) right.setDisableParser(disableParser);
-  }
-
-  public EditorUi.FontApi fontApi() {
-    return editor();
   }
 
   void fullFileLexedListener(EditorComponent editor) {
@@ -114,7 +110,7 @@ abstract class AbstractFileDiffRootView extends ViewArray
   }
 
   protected boolean isLeftEditor(EditorComponent editor) {
-    return editor != null && editor == editorForSide(true);
+    return editor != null && editor == editor(true);
   }
 
   void onDiffMadeListener(EditorComponent editor) {
@@ -126,8 +122,8 @@ abstract class AbstractFileDiffRootView extends ViewArray
   public void applyTheme(EditorColorScheme theme) {
     ui.setTheme(theme);
     boolean sizeChanged = false;
-    EditorComponent left = editorForSide(true);
-    EditorComponent right = editorForSide(false);
+    EditorComponent left = editor(true);
+    EditorComponent right = editor(false);
     if (left != null) {
       int h = left.lineHeight();
       left.setTheme(theme);
@@ -174,8 +170,8 @@ abstract class AbstractFileDiffRootView extends ViewArray
   }
 
   protected void setPositionsAtRange(DiffRange range) {
-    EditorComponent left = editorForSide(true);
-    EditorComponent right = editorForSide(false);
+    EditorComponent left = editor(true);
+    EditorComponent right = editor(false);
     if (left != null) {
       left.setPosition(0, range.fromL);
       left.revealLineInCenter(range.fromL);
@@ -209,7 +205,7 @@ abstract class AbstractFileDiffRootView extends ViewArray
 
   @Override
   public void restoreSelection(boolean isLeft, V2i pos, Pair<Pos, Pos> selection) {
-    var editor = editorForSide(isLeft);
+    var editor = editor(isLeft);
     if (editor == null) return;
     editor.setCaretLinePos(pos.x, pos.y, false);
     if (selection.first == null || selection.second == null) return;
@@ -226,8 +222,8 @@ abstract class AbstractFileDiffRootView extends ViewArray
 
   @Override
   public void updateModelOnDiff(DiffInfo diffModel) {
-    EditorComponent left = editorForSide(true);
-    EditorComponent right = editorForSide(false);
+    EditorComponent left = editor(true);
+    EditorComponent right = editor(false);
     if (left != null) {
       left.setDiffModel(diffModel.lineDiffsL);
       left.setDiffRanges(diffModel.ranges, true);

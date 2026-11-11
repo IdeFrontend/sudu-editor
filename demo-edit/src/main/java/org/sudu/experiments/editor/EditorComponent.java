@@ -105,7 +105,7 @@ public class EditorComponent extends View implements
 
   public boolean readonly = false;
   boolean mirrored = false;
-  boolean sideView = false;
+  boolean enableDiffAligning = false;
   private ExternalHighlights externalHighlights;
 
   Consumer<String> onError = System.err::println;
@@ -331,12 +331,8 @@ public class EditorComponent extends View implements
     mirrored = b;
   }
 
-  public void setSideView(boolean sideView) {
-    this.sideView = sideView;
-  }
-
-  public boolean isSideView() {
-    return sideView;
+  public void setEnableDiffAligning(boolean enableDiffAligning) {
+    this.enableDiffAligning = enableDiffAligning;
   }
 
   void toggleMirrored() {
@@ -820,7 +816,7 @@ public class EditorComponent extends View implements
       V4f tailColor = colors.editor.bg;
 
       if (lineIndex < 0) {
-        if (lineIndex == CodeLineMapping.outOfRange && sideView) {
+        if (lineIndex == CodeLineMapping.outOfRange && enableDiffAligning) {
           sizeTmp.set(textViewWidth + xOffset, lineHeight);
           g.drawRect(xPos - xOffset, pos.y + yPosition,
               sizeTmp, fillerBg(i));
@@ -902,7 +898,7 @@ public class EditorComponent extends View implements
     for (int i = firstLine; i < lastLine; i++) {
       int lineIndex = viewToDocMap[i - firstLine];
       if (lineIndex < 0) {
-        if (sideView && lineIndex == CodeLineMapping.outOfRange) {
+        if (enableDiffAligning && lineIndex == CodeLineMapping.outOfRange) {
           int yPosition = lineHeight * i - vScrollPos;
           g.drawRect(pos.x + xPos0, pos.y + yPosition, size, fillerBg(i));
         }
@@ -934,7 +930,7 @@ public class EditorComponent extends View implements
         flushNumberRun(runView, runN, runCount, runDoc);
         runCount = 0;
         int y0 = view * lineHeight - vScrollPos;
-        V4f emptyBg = sideView && docLine == CodeLineMapping.outOfRange
+        V4f emptyBg = enableDiffAligning && docLine == CodeLineMapping.outOfRange
             ? fillerBg(view) : colors.editor.bg;
         lineNumbers.drawEmptyLines(y0, y0 + lineHeight, g, emptyBg);
         continue;
@@ -1915,7 +1911,7 @@ public class EditorComponent extends View implements
   void parseViewport() {
     int first = getFirstLine();
     int last = getLastLine();
-    if (sideView) {
+    if (enableDiffAligning) {
       int firstDoc = -1, lastDoc = -1;
       for (int i = first; i <= last; i++) {
         int doc = docToView.viewToDoc(i);
@@ -2362,12 +2358,12 @@ public class EditorComponent extends View implements
         buildDiffMap();
     } else {
       clearCodeMap();
-      if (sideView) clearCompactViewModel();
+      if (enableDiffAligning) clearCompactViewModel();
     }
   }
 
   public void setDiffRanges(DiffRange[] ranges, boolean left) {
-    if (!sideView) return;
+    if (!enableDiffAligning) return;
     if (ranges == null || ranges.length == 0) {
       clearCompactViewModel();
       return;
@@ -2526,7 +2522,7 @@ public class EditorComponent extends View implements
 
     int viewDocLength = docToView.length();
     var height = Math.min(size.y, lineHeight * viewDocLength);
-    if (!sideView)
+    if (!enableDiffAligning)
       viewDocLength = Math.min(viewDocLength, model.diffModel.length);
     int[] mapping = new int[viewDocLength];
     docToView.viewToDocLines(0, viewDocLength, mapping);

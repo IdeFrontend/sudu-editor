@@ -1,6 +1,7 @@
 package org.sudu.experiments.diff;
 
 import org.sudu.experiments.editor.EditorComponent;
+import org.sudu.experiments.editor.EditorUi;
 import org.sudu.experiments.editor.worker.diff.FileDiffModel;
 import org.sudu.experiments.ui.window.WindowManager;
 
@@ -17,18 +18,18 @@ class SideDiffRootView extends AbstractFileDiffRootView {
     super(wm, isCodeReview);
     this.left = left;
     editor = new EditorComponent(ui);
-    editor.setSideView(true);
+    editor.setEnableDiffAligning(true);
     configureEditor(editor, disableParser);
     setViews(editor);
   }
 
   @Override
-  EditorComponent editor() {
+  EditorUi.FontApi fontApi() {
     return editor;
   }
 
   @Override
-  EditorComponent editorForSide(boolean isLeft) {
+  EditorComponent editor(boolean isLeft) {
     return isLeft == left ? editor : null;
   }
 

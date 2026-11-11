@@ -21,7 +21,7 @@ public class FileDiffModel {
   public final Model leftModel, rightModel;
   public final UndoBuffer undoBuffer = new UndoBuffer();
   public DiffInfo diffModel;
-  public ViewToModel[] editorToView;
+  public ViewToModel[] viewsToModel;
 
   WorkerJobExecutor executor;
 
@@ -235,9 +235,8 @@ public class FileDiffModel {
   }
 
   int[] getSyncPoints(boolean left) {
-    ViewToModel[] views = editorToView;
-    if (views == null) return new int[0];
-    for (ViewToModel v : views) {
+    if (viewsToModel == null) return new int[0];
+    for (ViewToModel v : viewsToModel) {
       int[] sp = v.getSyncPoints(left);
       if (sp != null && sp.length > 0) return sp;
     }
@@ -331,28 +330,27 @@ public class FileDiffModel {
   }
 
   public TriConsumer<Boolean, V2i, Pair<Pos, Pos>> restoreSelection() {
-    if (editorToView == null) return null;
+    if (viewsToModel == null) return null;
     return (left, caret, selection) ->
         forEachView(v -> v.restoreSelection(left, caret, selection));
   }
 
   public void addView(ViewToModel view) {
     if (view == null) return;
-    if (editorToView == null) {
-      editorToView = new ViewToModel[]{view};
+    if (viewsToModel == null) {
+      viewsToModel = new ViewToModel[]{view};
       return;
     }
-    if (ArrayOp.indexOf(editorToView, view) >= 0) return;
-    editorToView = ArrayOp.add(editorToView, view);
+    if (ArrayOp.indexOf(viewsToModel, view) >= 0) return;
+    viewsToModel = ArrayOp.add(viewsToModel, view);
   }
 
   public void removeView(ViewToModel view) {
-    editorToView = ArrayOp.remove(editorToView, view);
+    viewsToModel = ArrayOp.remove(viewsToModel, view);
   }
 
   private void forEachView(Consumer<ViewToModel> action) {
-    ViewToModel[] views = editorToView;
-    if (views == null) return;
-    for (ViewToModel v : views) action.accept(v);
+    if (viewsToModel == null) return;
+    for (ViewToModel v : viewsToModel) action.accept(v);
   }
 }
