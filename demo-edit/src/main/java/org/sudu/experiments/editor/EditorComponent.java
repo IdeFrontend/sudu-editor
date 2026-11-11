@@ -3,6 +3,7 @@
 package org.sudu.experiments.editor;
 
 import org.sudu.experiments.*;
+import org.sudu.experiments.diff.DiffTypes;
 import org.sudu.experiments.diff.LineDiff;
 import org.sudu.experiments.editor.worker.diff.DiffRange;
 import org.sudu.experiments.editor.EditorUi.FontApi;
@@ -128,6 +129,7 @@ public class EditorComponent extends View implements
   boolean buildCodeMapRequest;
   GL.Texture codeMap;
   final V2i codeMapSize = new V2i();
+  int[] codeMapViewToDoc;
 
   CodeLineMapping docToView = new CodeLineMapping.Id(model);
   IntConsumer compactModeActions;
@@ -1807,10 +1809,11 @@ public class EditorComponent extends View implements
   }
 
   private int hitTestFindDiff(V2i mousePos) {
-    return codeMap == null || model.diffModel == null ? -1 :
+    return codeMap == null || model.diffModel == null
+        || codeMapViewToDoc == null ? -1 :
         DiffImage.findDiff(
             mousePos, codeMapX(), codeMapY(), codeMapSize,
-            model.document.length(), model.diffModel);
+            codeMapViewToDoc, model.diffModel);
   }
 
   boolean onMouseMoveCodeMap(V2i mousePos, SetCursor setCursor) {
@@ -2526,13 +2529,37 @@ public class EditorComponent extends View implements
       viewDocLength = Math.min(viewDocLength, model.diffModel.length);
     int[] mapping = new int[viewDocLength];
     docToView.viewToDocLines(0, viewDocLength, mapping);
+    byte[] viewTypes = codeMapViewTypes(mapping, model.diffModel);
     var img = DiffImage.diffImage(model.diffModel, height,
-        mapping, colors.codeMapBg);
+        mapping, viewTypes, colors.codeMapBg);
     codeMap.setContent(img);
     codeMapSize.y = height;
+    codeMapViewToDoc = mapping;
+  }
+
+  // One type per view row, including blank alignment slots. Insert-only
+  // hunks stay off the left map; delete-only hunks stay off the right.
+  private byte[] codeMapViewTypes(int[] mapping, LineDiff[] diffs) {
+    byte[] types = new byte[mapping.length];
+    boolean left = enableDiffAligning
+        && docToView instanceof AlignedDiffMapping a && a.left;
+    for (int i = 0; i < mapping.length; i++) {
+      int doc = mapping[i];
+      int type = 0;
+      if (doc >= 0 && doc < diffs.length && diffs[doc] != null) {
+        type = diffs[doc].type;
+      } else if (enableDiffAligning) {
+        type = docToView.viewLineDiffType(i);
+        if (left ? type == DiffTypes.INSERTED : type == DiffTypes.DELETED)
+          type = 0;
+      }
+      types[i] = (byte) type;
+    }
+    return types;
   }
 
   public void clearCodeMap() {
+    codeMapViewToDoc = null;
     if (codeMap != null)
       codeMap = Disposable.assign(codeMap, null);
   }
