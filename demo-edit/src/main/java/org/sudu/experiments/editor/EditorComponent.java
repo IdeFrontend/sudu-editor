@@ -3,7 +3,6 @@
 package org.sudu.experiments.editor;
 
 import org.sudu.experiments.*;
-import org.sudu.experiments.diff.DiffTypes;
 import org.sudu.experiments.diff.LineDiff;
 import org.sudu.experiments.editor.worker.diff.DiffRange;
 import org.sudu.experiments.editor.EditorUi.FontApi;
@@ -158,7 +157,7 @@ public class EditorComponent extends View implements
     debugFlags[6] = () -> printResolveTime = !printResolveTime;
     debugFlags[8] = () -> drawTextFrame = !drawTextFrame;
 
-    model.setEditor(this, window().worker());
+    model.attachEditor(this, window().worker());
   }
 
   /*Disposable*/ void registerMouse(InputListeners input) {
@@ -466,7 +465,7 @@ public class EditorComponent extends View implements
     lrContext.dispose();
     lineNumbers.dispose();
     mergeButtons = Disposable.assign(mergeButtons, null);
-    model.setEditor(null, null);
+    model.detachEditor(this);
     context = null;
     g =  null;
     ui = null;
@@ -821,7 +820,7 @@ public class EditorComponent extends View implements
         if (lineIndex == CodeLineMapping.outOfRange && enableDiffAligning) {
           sizeTmp.set(textViewWidth + xOffset, lineHeight);
           g.drawRect(xPos - xOffset, pos.y + yPosition,
-              sizeTmp, fillerBg(i));
+              sizeTmp, colors.editor.bg);
         } else if (lineIndex != CodeLineMapping.outOfRange) {
           sizeTmp.set(textViewWidth + xOffset, lineHeight);
           g.drawRect(xPos - xOffset, pos.y + yPosition,
@@ -883,13 +882,6 @@ public class EditorComponent extends View implements
     return pos.y;
   }
 
-  private V4f fillerBg(int viewLine) {
-    int type = docToView.viewLineDiffType(viewLine);
-    return type != 0
-        ? colors.codeDiffBg.getDiffColor(colors, type)
-        : colors.editor.bg;
-  }
-
   private void drawFromLineToText(int firstLine, int lastLine) {
     LineDiff[] diffModel = model.diffModel;
     int xPos0 = textBaseX - vLineTextOffset;
@@ -902,7 +894,7 @@ public class EditorComponent extends View implements
       if (lineIndex < 0) {
         if (enableDiffAligning && lineIndex == CodeLineMapping.outOfRange) {
           int yPosition = lineHeight * i - vScrollPos;
-          g.drawRect(pos.x + xPos0, pos.y + yPosition, size, fillerBg(i));
+          g.drawRect(pos.x + xPos0, pos.y + yPosition, size, colors.editor.bg);
         }
         continue;
       }
@@ -932,9 +924,7 @@ public class EditorComponent extends View implements
         flushNumberRun(runView, runN, runCount, runDoc);
         runCount = 0;
         int y0 = view * lineHeight - vScrollPos;
-        V4f emptyBg = enableDiffAligning && docLine == CodeLineMapping.outOfRange
-            ? fillerBg(view) : colors.editor.bg;
-        lineNumbers.drawEmptyLines(y0, y0 + lineHeight, g, emptyBg);
+        lineNumbers.drawEmptyLines(y0, y0 + lineHeight, g, colors.editor.bg);
         continue;
       }
       int N = doc.resolveLineNumber(docLine);
@@ -2156,9 +2146,9 @@ public class EditorComponent extends View implements
     Model oldModel = this.model;
     this.model = model;
     clearCompactViewModel();
-    oldModel.setEditor(null, null);
+    oldModel.detachEditor(this);
     model.setGetUndoBuffer(getUndoBuffer);
-    model.setEditor(this, window().worker());
+    model.attachEditor(this, window().worker());
     if (model.document.isMapped()) {
       readonly = true;
     }
@@ -2209,7 +2199,7 @@ public class EditorComponent extends View implements
   }
 
   public boolean hasSyncPoints() {
-    return syncPoints.hasSyncPoints();
+    return syncPoints != null && syncPoints.hasSyncPoints();
   }
 
   public boolean hasSyncPoint(V2i eventPos) {
@@ -2537,23 +2527,14 @@ public class EditorComponent extends View implements
     codeMapViewToDoc = mapping;
   }
 
-  // One type per view row, including blank alignment slots. Insert-only
-  // hunks stay off the left map; delete-only hunks stay off the right.
+  // One type per view row. Alignment blanks stay empty so the editor,
+  // map, and hit-test all treat padding the same way.
   private byte[] codeMapViewTypes(int[] mapping, LineDiff[] diffs) {
     byte[] types = new byte[mapping.length];
-    boolean left = enableDiffAligning
-        && docToView instanceof AlignedDiffMapping a && a.left;
     for (int i = 0; i < mapping.length; i++) {
       int doc = mapping[i];
-      int type = 0;
-      if (doc >= 0 && doc < diffs.length && diffs[doc] != null) {
-        type = diffs[doc].type;
-      } else if (enableDiffAligning) {
-        type = docToView.viewLineDiffType(i);
-        if (left ? type == DiffTypes.INSERTED : type == DiffTypes.DELETED)
-          type = 0;
-      }
-      types[i] = (byte) type;
+      if (doc >= 0 && doc < diffs.length && diffs[doc] != null)
+        types[i] = (byte) diffs[doc].type;
     }
     return types;
   }
@@ -2608,7 +2589,7 @@ public class EditorComponent extends View implements
   }
 
   public boolean canAlignWith() {
-    if (isLastMouseDownPosUnset()) return false;
+    if (syncPoints == null || isLastMouseDownPosUnset()) return false;
     return !hasSyncPoint(computeSyncPoint(lastMouseDownPos));
   }
 

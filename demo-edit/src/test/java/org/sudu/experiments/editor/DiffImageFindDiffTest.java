@@ -43,6 +43,19 @@ class DiffImageFindDiffTest {
   }
 
   @Test
+  void editedPaddingIsNotAHit() {
+    // Real edited line, then several empty pads. Click a pad that is not
+    // adjacent to the document line (findDiff also samples neighboring pixels).
+    int[] viewToDoc = { 0, -1, -1, -1, -1, -1 };
+    LineDiff[] model = { new LineDiff(DiffTypes.EDITED) };
+    int height = viewToDoc.length;
+    int imgPos = imgPosForViewLine(4, height, viewToDoc.length);
+    int found = DiffImage.findDiff(
+        new V2i(1, imgPos), 0, 0, new V2i(4, height), viewToDoc, model);
+    assertEquals(-1, found);
+  }
+
+  @Test
   void mapKeepsBlankSlotsSoLaterHunksStayPut() {
     int[] viewToDoc = { -1, -1, -1, -1, 0, 1 };
     LineDiff[] model = { null, new LineDiff(DiffTypes.EDITED) };

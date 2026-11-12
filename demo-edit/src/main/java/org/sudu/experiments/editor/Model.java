@@ -37,6 +37,7 @@ public class Model {
   final NavigationStack navStack = new NavigationStack();
 
   EditorToModel editor;
+  private final List<EditorToModel> editors = new ArrayList<>();
 
   WorkerJobExecutor executor;
 
@@ -158,7 +159,7 @@ public class Model {
         copyOf(parseRes.graphChars)
     );
     printParsingTime("Full file parsed");
-    if (fullFileLexed != ParseStatus.PARSED && editor != null) editor.fireFileLexed();
+    if (fullFileLexed != ParseStatus.PARSED) fireFileLexed();
     fileStructureParsed = ParseStatus.PARSED;
     fullFileLexed = ParseStatus.PARSED;
     fullFileParsed = ParseStatus.PARSED;
@@ -210,7 +211,7 @@ public class Model {
     printParsingTime("Full file lexed");
     if (isDisableParser()) setParsed();
     else {
-      if (editor != null) editor.fireFileLexed();
+      fireFileLexed();
       sendStructure();
       sendFull();
     }
@@ -225,7 +226,7 @@ public class Model {
     printParsingTime("Full file lexed");
     if (isDisableParser()) setParsed();
     else {
-      if (editor != null) editor.fireFileLexed();
+      fireFileLexed();
       sendStructure();
       sendFull();
     }
@@ -303,15 +304,43 @@ public class Model {
   }
 
   void setEditor(EditorToModel editor, WorkerJobExecutor executor) {
-    this.editor = editor;
+    editors.clear();
+    this.editor = null;
     this.executor = executor;
+    if (editor != null) attachEditor(editor, executor);
+    if (executor == null) document.invalidateMeasure();
+  }
+
+  void attachEditor(EditorToModel editor, WorkerJobExecutor executor) {
+    if (editor == null) return;
+    if (!editors.contains(editor)) editors.add(editor);
+    this.editor = editor;
+    if (executor != null) this.executor = executor;
     applyDocumentTokens();
-    if (executor != null) {
+    if (this.executor != null) {
       if (fullFileParsed == ParseStatus.NOT_PARSED) requestParseFile();
       // todo: execute eny pending jobs here
-    } else {
+    }
+  }
+
+  void detachEditor(EditorToModel editor) {
+    if (editor == null) return;
+    editors.remove(editor);
+    if (this.editor == editor) {
+      this.editor = editors.isEmpty() ? null : editors.get(editors.size() - 1);
+    }
+    if (editors.isEmpty()) {
+      executor = null;
       document.invalidateMeasure();
     }
+  }
+
+  private void fireFileLexed() {
+    forEachEditor(EditorToModel::fireFileLexed);
+  }
+
+  private void forEachEditor(Consumer<EditorToModel> action) {
+    for (int i = 0; i < editors.size(); i++) action.accept(editors.get(i));
   }
 
   public void setExecutor(WorkerJobExecutor executor) {
@@ -322,7 +351,7 @@ public class Model {
     fileStructureParsed = ParseStatus.PARSED;
     fullFileLexed = ParseStatus.PARSED;
     fullFileParsed = ParseStatus.PARSED;
-    if (editor != null) editor.fireFileLexed();
+    fireFileLexed();
   }
 
   void requestParseFile() {
@@ -422,7 +451,7 @@ public class Model {
       parsingTimeStart = System.currentTimeMillis();
       executor.sendToWorker(true, this::onFileParsed,
           parseJob, chars, new int[]{Languages.getType(language()), document.version()});
-    } else if (editor != null) editor.fireFileLexed();
+    } else fireFileLexed();
   }
 
   void iterativeParsing() {
@@ -444,7 +473,7 @@ public class Model {
     if (reparseNode == null) {
       resolveAll();
       document.onReparse();
-      if (editor != null) editor.fireFileLexed();
+      fireFileLexed();
       return;
     }
 
@@ -492,7 +521,7 @@ public class Model {
       document.onReparse();
     }
     iterativeFileParsed = ParseStatus.PARSED;
-    if (editor != null) editor.fireFileIterativeParsed(start, stop);
+    forEachEditor(e -> e.fireFileIterativeParsed(start, stop));
   }
 
   static String parseJobName(String language) {
@@ -608,7 +637,7 @@ public class Model {
   }
 
   private void updateModelOnDiff(Diff diff, boolean isUndo) {
-    if (editor != null) editor.updateModelOnDiff(diff, isUndo);
+    forEachEditor(e -> e.updateModelOnDiff(diff, isUndo));
   }
 
   private void syncEditing(CpxDiff diffs, boolean isUndo) {
@@ -717,12 +746,12 @@ public class Model {
   }
 
   private void onDiffMade(CpxDiff cpxDiff) {
-    if (editor != null) editor.onDiffMade();
+    forEachEditor(EditorToModel::onDiffMade);
     if (onDiffMadeListener != null) onDiffMadeListener.accept(cpxDiff.diffLineRanges());
   }
 
   private void onChangeApplied(CpxDiff cpxDiff) {
-    if (editor != null) editor.onDiffMade();
+    forEachEditor(EditorToModel::onDiffMade);
   }
 
   CodeLine caretCodeLine() {
