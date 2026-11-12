@@ -837,7 +837,10 @@ public class EditorComponent extends View implements
         var dm = diffModel != null && lineIndex < diffModel.length
             ? diffModel[lineIndex] : null;
         if (dm != null) {
-          tailColor = colors.codeDiffBg.getDiffColor(colors, dm.type);
+          boolean isBlank = model.document.line(lineIndex).totalStrLength == 0;
+          int type = LineDiff.editedDelInsTailType(diffModel, lineIndex, isBlank);
+          if (type == 0) type = dm.type;
+          tailColor = colors.codeDiffBg.getDiffColor(colors, type);
         } else {
           boolean isCurrentLine = model.caretLine == lineIndex;
           if (isCurrentLine)
