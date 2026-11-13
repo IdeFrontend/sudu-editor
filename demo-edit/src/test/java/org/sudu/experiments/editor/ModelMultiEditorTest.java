@@ -7,7 +7,9 @@ import org.sudu.experiments.worker.WorkerJobExecutor;
 import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
 import static org.junit.jupiter.api.Assertions.assertSame;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 
 class ModelMultiEditorTest {
 
@@ -56,16 +58,44 @@ class ModelMultiEditorTest {
     assertSame(workerB, model.executor);
   }
 
+  @Test
+  void parserRunsIfAnyAttachedEditorEnablesIt() {
+    Model model = new Model(new String[]{"a"}, Languages.TEXT, null);
+    CountingEditor disabled = new CountingEditor();
+    CountingEditor enabled = new CountingEditor();
+    enabled.disableParser = false;
+    model.attachEditor(disabled, null);
+    assertTrue(model.isDisableParser());
+    model.attachEditor(enabled, null);
+    assertFalse(model.isDisableParser());
+  }
+
+  @Test
+  void documentHighlightsReachEveryAttachedEditor() {
+    Model model = new Model(new String[]{"a"}, Languages.TEXT, null);
+    CountingEditor first = new CountingEditor();
+    CountingEditor second = new CountingEditor();
+    model.attachEditor(first, null);
+    model.attachEditor(second, null);
+    model.computeUsages();
+    assertEquals(1, first.highlightProvider);
+    assertEquals(1, second.highlightProvider);
+  }
+
   static final class CountingEditor implements Model.EditorToModel {
     int onDiffMade;
     int updateModelOnDiff;
+    int highlightProvider;
+    boolean disableParser = true;
 
-    public void useDocumentHighlightProvider(int line, int column) {}
+    public void useDocumentHighlightProvider(int line, int column) {
+      highlightProvider++;
+    }
     public void fireFileLexed() {}
     public void fireFileIterativeParsed(int start, int stop) {}
     public void updateModelOnDiff(Diff diff, boolean isUndo) { updateModelOnDiff++; }
     public void onDiffMade() { onDiffMade++; }
-    public boolean isDisableParser() { return true; }
+    public boolean isDisableParser() { return disableParser; }
     public CodeLineColorScheme getColorScheme() { return null; }
   }
 

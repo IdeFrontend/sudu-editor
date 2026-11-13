@@ -52,6 +52,45 @@ class FileDiffModelOncePerEditTest {
     assertEquals(1, editor2.updateModelOnDiff);
   }
 
+  @Test
+  void twoFileDiffModelsOnTheSameDocumentsBothShiftOnce() {
+    Model left = new Model(new String[]{"a", "b", "c"}, Languages.TEXT, null);
+    Model right = new Model(new String[]{"a", "b", "c"}, Languages.TEXT, null);
+    FileDiffModel first = new FileDiffModel(new NoopExecutor(), left, right);
+    FileDiffModel second = new FileDiffModel(new NoopExecutor(), left, right);
+    first.diffModel = new DiffInfo(
+        new LineDiff[3], new LineDiff[3],
+        new DiffRange[] {
+            new DiffRange(0, 1, 0, 1, DiffTypes.DEFAULT),
+            new DiffRange(1, 2, 1, 2, DiffTypes.EDITED)
+        }
+    );
+    second.diffModel = new DiffInfo(
+        new LineDiff[3], new LineDiff[3],
+        new DiffRange[] {
+            new DiffRange(0, 1, 0, 1, DiffTypes.DEFAULT),
+            new DiffRange(1, 2, 1, 2, DiffTypes.EDITED)
+        }
+    );
+    CountingView firstView = new CountingView();
+    CountingView secondView = new CountingView();
+    first.addView(firstView);
+    second.addView(secondView);
+
+    left.document.insertLines(0, 0, new String[]{"x", "y"});
+
+    assertEquals(2, first.diffModel.ranges[1].fromL);
+    assertEquals(2, second.diffModel.ranges[1].fromL);
+    assertEquals(1, firstView.updateModelOnDiff);
+    assertEquals(1, secondView.updateModelOnDiff);
+
+    first.removeView(firstView);
+    left.document.insertLines(0, 0, new String[]{"p", "q"});
+
+    assertEquals(2, first.diffModel.ranges[1].fromL);
+    assertEquals(3, second.diffModel.ranges[1].fromL);
+  }
+
   static final class CountingView implements FileDiffModel.ViewToModel {
     int updateModelOnDiff;
 

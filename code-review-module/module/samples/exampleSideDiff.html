@@ -11,10 +11,18 @@
       padding: 0;
     }
 
-    .diff {
+    body {
+      display: flex;
+      flex-direction: column;
       overflow: hidden;
+    }
+
+    .diff {
+      flex: 1;
+      min-height: 0;
       display: flex;
       flex-direction: row;
+      overflow: hidden;
     }
 
     .left, .right {

@@ -68,9 +68,9 @@ public class Model {
   boolean debug = false;
 
   private Consumer<int[]> onDiffMadeListener;
-  private BiConsumer<Diff, Boolean> onUpdateModelOnDiff;
-  private BiConsumer<Integer, Integer> onIterativeParsed;
-  private Runnable onFileLexed;
+  private final List<BiConsumer<Diff, Boolean>> onUpdateModelOnDiff = new ArrayList<>();
+  private final List<BiConsumer<Integer, Integer>> onIterativeParsed = new ArrayList<>();
+  private final List<Runnable> onFileLexed = new ArrayList<>();
   private BiConsumer<CpxDiff, Boolean> syncEditing;
   private Supplier<UndoBuffer> getUndoBuffer;
 
@@ -284,10 +284,7 @@ public class Model {
       }
     }
 
-    EditorToModel live = liveEditor();
-    if (live != null) {
-      live.useDocumentHighlightProvider(caretPos.line, caretPos.charPos);
-    }
+    forEachEditor(e -> e.useDocumentHighlightProvider(caretPos.line, caretPos.charPos));
   }
 
   void clearUsages() {
@@ -356,10 +353,6 @@ public class Model {
     }
   }
 
-  private EditorToModel liveEditor() {
-    return editors.isEmpty() ? null : editors.get(0);
-  }
-
   private EditorToModel colorSchemeEditor() {
     for (int i = 0; i < editors.size(); i++) {
       EditorToModel e = editors.get(i);
@@ -369,7 +362,7 @@ public class Model {
   }
 
   private void fireFileLexed() {
-    if (onFileLexed != null) onFileLexed.run();
+    for (int i = 0; i < onFileLexed.size(); i++) onFileLexed.get(i).run();
     forEachEditor(EditorToModel::fireFileLexed);
   }
 
@@ -555,7 +548,8 @@ public class Model {
       document.onReparse();
     }
     iterativeFileParsed = ParseStatus.PARSED;
-    if (onIterativeParsed != null) onIterativeParsed.accept(start, stop);
+    for (int i = 0; i < onIterativeParsed.size(); i++)
+      onIterativeParsed.get(i).accept(start, stop);
     forEachEditor(e -> e.fireFileIterativeParsed(start, stop));
   }
 
@@ -672,7 +666,8 @@ public class Model {
   }
 
   private void updateModelOnDiff(Diff diff, boolean isUndo) {
-    if (onUpdateModelOnDiff != null) onUpdateModelOnDiff.accept(diff, isUndo);
+    for (int i = 0; i < onUpdateModelOnDiff.size(); i++)
+      onUpdateModelOnDiff.get(i).accept(diff, isUndo);
     forEachEditor(e -> e.updateModelOnDiff(diff, isUndo));
   }
 
@@ -696,16 +691,31 @@ public class Model {
     onDiffMadeListener = listener;
   }
 
-  public void setOnUpdateModelOnDiff(BiConsumer<Diff, Boolean> listener) {
-    onUpdateModelOnDiff = listener;
+  public void addOnUpdateModelOnDiff(BiConsumer<Diff, Boolean> listener) {
+    if (listener != null && !onUpdateModelOnDiff.contains(listener))
+      onUpdateModelOnDiff.add(listener);
   }
 
-  public void setOnIterativeParsed(BiConsumer<Integer, Integer> listener) {
-    onIterativeParsed = listener;
+  public void removeOnUpdateModelOnDiff(BiConsumer<Diff, Boolean> listener) {
+    onUpdateModelOnDiff.remove(listener);
   }
 
-  public void setOnFileLexed(Runnable listener) {
-    onFileLexed = listener;
+  public void addOnIterativeParsed(BiConsumer<Integer, Integer> listener) {
+    if (listener != null && !onIterativeParsed.contains(listener))
+      onIterativeParsed.add(listener);
+  }
+
+  public void removeOnIterativeParsed(BiConsumer<Integer, Integer> listener) {
+    onIterativeParsed.remove(listener);
+  }
+
+  public void addOnFileLexed(Runnable listener) {
+    if (listener != null && !onFileLexed.contains(listener))
+      onFileLexed.add(listener);
+  }
+
+  public void removeOnFileLexed(Runnable listener) {
+    onFileLexed.remove(listener);
   }
 
   public void setSemanticTokens(SemanticTokenInfo[] tokens) {
@@ -808,12 +818,12 @@ public class Model {
     return document.lines[caretLine];
   }
 
-  private boolean isDisableParser() {
+  boolean isDisableParser() {
     if (editors.isEmpty()) return EditorConst.DEFAULT_DISABLE_PARSER;
-    for (EditorToModel editorToModel : editors) {
-      if (editorToModel.isDisableParser()) return true;
+    for (int i = 0; i < editors.size(); i++) {
+      if (!editors.get(i).isDisableParser()) return false;
     }
-    return false;
+    return true;
   }
 
   interface EditorToModel {
