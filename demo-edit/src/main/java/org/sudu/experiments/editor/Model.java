@@ -19,6 +19,7 @@ import org.sudu.experiments.worker.WorkerJobExecutor;
 
 import java.util.*;
 import java.util.function.BiConsumer;
+import java.util.function.BiPredicate;
 import java.util.function.Consumer;
 import java.util.function.Supplier;
 
@@ -71,8 +72,8 @@ public class Model {
   private final List<BiConsumer<Diff, Boolean>> onUpdateModelOnDiff = new ArrayList<>();
   private final List<BiConsumer<Integer, Integer>> onIterativeParsed = new ArrayList<>();
   private final List<Runnable> onFileLexed = new ArrayList<>();
-  private BiConsumer<CpxDiff, Boolean> syncEditing;
-  private Supplier<UndoBuffer> getUndoBuffer;
+  private final List<BiPredicate<CpxDiff, Boolean>> syncEditing = new ArrayList<>();
+  private final List<Supplier<UndoBuffer>> undoBuffers = new ArrayList<>();
 
   public Model(String text, Uri uri) {
     this(text, null, uri);
@@ -672,19 +673,39 @@ public class Model {
   }
 
   private void syncEditing(CpxDiff diffs, boolean isUndo) {
-    if (syncEditing != null) syncEditing.accept(diffs, isUndo);
+    for (int i = 0; i < syncEditing.size(); i++) {
+      if (syncEditing.get(i).test(diffs, isUndo)) return;
+    }
   }
 
   private UndoBuffer getUndoBuffer() {
-    return getUndoBuffer != null ? getUndoBuffer.get() : null;
+    for (int i = 0; i < undoBuffers.size(); i++) {
+      UndoBuffer buffer = undoBuffers.get(i).get();
+      if (buffer != null) return buffer;
+    }
+    return null;
   }
 
-  public void setSyncEditing(BiConsumer<CpxDiff, Boolean> syncEditing) {
-    this.syncEditing = syncEditing;
+  public UndoBuffer undoBuffer() {
+    return getUndoBuffer();
   }
 
-  public void setGetUndoBuffer(Supplier<UndoBuffer> getUndoBuffer) {
-    this.getUndoBuffer = getUndoBuffer;
+  public void addSyncEditing(BiPredicate<CpxDiff, Boolean> listener) {
+    if (listener != null && !syncEditing.contains(listener))
+      syncEditing.add(listener);
+  }
+
+  public void removeSyncEditing(BiPredicate<CpxDiff, Boolean> listener) {
+    syncEditing.remove(listener);
+  }
+
+  public void addGetUndoBuffer(Supplier<UndoBuffer> supplier) {
+    if (supplier != null && !undoBuffers.contains(supplier))
+      undoBuffers.add(supplier);
+  }
+
+  public void removeGetUndoBuffer(Supplier<UndoBuffer> supplier) {
+    undoBuffers.remove(supplier);
   }
 
   public void setOnDiffMadeListener(Consumer<int[]> listener) {

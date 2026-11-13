@@ -2149,8 +2149,9 @@ public class EditorComponent extends View implements
     Model oldModel = this.model;
     this.model = model;
     clearCompactViewModel();
+    oldModel.removeGetUndoBuffer(getUndoBuffer);
     oldModel.detachEditor(this);
-    model.setGetUndoBuffer(getUndoBuffer);
+    model.addGetUndoBuffer(getUndoBuffer);
     model.attachEditor(this, window().worker());
     if (model.document.isMapped()) {
       readonly = true;
