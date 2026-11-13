@@ -34,9 +34,6 @@ abstract class AbstractFileDiffRootView extends ViewArray
   abstract void attachEditors(FileDiffModel model);
 
   protected void configureEditor(EditorComponent ed, boolean disableParser) {
-    ed.setFullFileLexedListener(this::fullFileLexedListener);
-    ed.setIterativeParseFileListener(this::iterativeParseFileListener);
-    ed.setUpdateModelOnDiffListener(this::updateModelOnDiffMadeListener);
     ed.setOnDiffMadeListener(this::onDiffMadeListener);
     ed.highlightResolveError(false);
     ed.setDisableParser(disableParser);
@@ -85,20 +82,6 @@ abstract class AbstractFileDiffRootView extends ViewArray
     EditorComponent right = editor(false);
     if (left != null) left.setDisableParser(disableParser);
     if (right != null) right.setDisableParser(disableParser);
-  }
-
-  void fullFileLexedListener(EditorComponent editor) {
-    if (fileDiffModel != null) fileDiffModel.fullFileLexedListener(isLeftEditor(editor));
-  }
-
-  void iterativeParseFileListener(EditorComponent editor, int start, int stop) {
-    if (fileDiffModel != null)
-      fileDiffModel.iterativeParseFileListener(isLeftEditor(editor), start, stop);
-  }
-
-  void updateModelOnDiffMadeListener(EditorComponent editor, Diff diff, boolean isUndo) {
-    if (fileDiffModel != null)
-      fileDiffModel.updateModelOnDiffMadeListener(isLeftEditor(editor), diff, isUndo);
   }
 
   void sendToDiff(boolean cmpOnlyLines) {

@@ -38,6 +38,7 @@ public class Model {
 
   EditorToModel editor;
   private final List<EditorToModel> editors = new ArrayList<>();
+  private final List<WorkerJobExecutor> executors = new ArrayList<>();
 
   WorkerJobExecutor executor;
 
@@ -67,6 +68,9 @@ public class Model {
   boolean debug = false;
 
   private Consumer<int[]> onDiffMadeListener;
+  private BiConsumer<Diff, Boolean> onUpdateModelOnDiff;
+  private BiConsumer<Integer, Integer> onIterativeParsed;
+  private Runnable onFileLexed;
   private BiConsumer<CpxDiff, Boolean> syncEditing;
   private Supplier<UndoBuffer> getUndoBuffer;
 
@@ -280,8 +284,9 @@ public class Model {
       }
     }
 
-    if (editor != null) {
-      editor.useDocumentHighlightProvider(caretPos.line, caretPos.charPos);
+    EditorToModel live = liveEditor();
+    if (live != null) {
+      live.useDocumentHighlightProvider(caretPos.line, caretPos.charPos);
     }
   }
 
@@ -305,6 +310,7 @@ public class Model {
 
   void setEditor(EditorToModel editor, WorkerJobExecutor executor) {
     editors.clear();
+    executors.clear();
     this.editor = null;
     this.executor = executor;
     if (editor != null) attachEditor(editor, executor);
@@ -313,9 +319,14 @@ public class Model {
 
   void attachEditor(EditorToModel editor, WorkerJobExecutor executor) {
     if (editor == null) return;
-    if (!editors.contains(editor)) editors.add(editor);
-    this.editor = editor;
-    if (executor != null) this.executor = executor;
+    int i = editors.indexOf(editor);
+    if (i >= 0) {
+      if (executor != null) executors.set(i, executor);
+    } else {
+      editors.add(editor);
+      executors.add(executor);
+    }
+    bindLiveEditor();
     applyDocumentTokens();
     if (this.executor != null) {
       if (fullFileParsed == ParseStatus.NOT_PARSED) requestParseFile();
@@ -325,17 +336,40 @@ public class Model {
 
   void detachEditor(EditorToModel editor) {
     if (editor == null) return;
-    editors.remove(editor);
-    if (this.editor == editor) {
-      this.editor = editors.isEmpty() ? null : editors.get(editors.size() - 1);
-    }
-    if (editors.isEmpty()) {
-      executor = null;
-      document.invalidateMeasure();
+    int i = editors.indexOf(editor);
+    if (i < 0) return;
+    editors.remove(i);
+    executors.remove(i);
+    bindLiveEditor();
+    if (editors.isEmpty()) document.invalidateMeasure();
+  }
+
+  private void bindLiveEditor() {
+    this.editor = editors.isEmpty() ? null : editors.get(0);
+    this.executor = null;
+    for (int i = 0; i < executors.size(); i++) {
+      WorkerJobExecutor ex = executors.get(i);
+      if (ex != null) {
+        this.executor = ex;
+        break;
+      }
     }
   }
 
+  private EditorToModel liveEditor() {
+    return editors.isEmpty() ? null : editors.get(0);
+  }
+
+  private EditorToModel colorSchemeEditor() {
+    for (int i = 0; i < editors.size(); i++) {
+      EditorToModel e = editors.get(i);
+      if (e.getColorScheme() != null) return e;
+    }
+    return null;
+  }
+
   private void fireFileLexed() {
+    if (onFileLexed != null) onFileLexed.run();
     forEachEditor(EditorToModel::fireFileLexed);
   }
 
@@ -521,6 +555,7 @@ public class Model {
       document.onReparse();
     }
     iterativeFileParsed = ParseStatus.PARSED;
+    if (onIterativeParsed != null) onIterativeParsed.accept(start, stop);
     forEachEditor(e -> e.fireFileIterativeParsed(start, stop));
   }
 
@@ -637,6 +672,7 @@ public class Model {
   }
 
   private void updateModelOnDiff(Diff diff, boolean isUndo) {
+    if (onUpdateModelOnDiff != null) onUpdateModelOnDiff.accept(diff, isUndo);
     forEachEditor(e -> e.updateModelOnDiff(diff, isUndo));
   }
 
@@ -658,6 +694,18 @@ public class Model {
 
   public void setOnDiffMadeListener(Consumer<int[]> listener) {
     onDiffMadeListener = listener;
+  }
+
+  public void setOnUpdateModelOnDiff(BiConsumer<Diff, Boolean> listener) {
+    onUpdateModelOnDiff = listener;
+  }
+
+  public void setOnIterativeParsed(BiConsumer<Integer, Integer> listener) {
+    onIterativeParsed = listener;
+  }
+
+  public void setOnFileLexed(Runnable listener) {
+    onFileLexed = listener;
   }
 
   public void setSemanticTokens(SemanticTokenInfo[] tokens) {
@@ -716,8 +764,7 @@ public class Model {
   }
 
   private void applyDocumentTokens() {
-    if (documentTokens == null || editor == null) return;
-    if (editor.getColorScheme() == null) return;
+    if (documentTokens == null || colorSchemeEditor() == null) return;
     for (var token: documentTokens) {
       if (token == null || token.line < 0 || token.line >= document.length()) continue;
       applyTokenAt(token, token.line);
@@ -736,9 +783,12 @@ public class Model {
       System.err.println(errMsg);
       return;
     }
-    if (token.hasColor() && editor != null) {
-      var colorScheme = editor.getColorScheme();
-      token.tokenType = colorScheme.getSemanticIndex(token.foreground, token.background);
+    if (token.hasColor()) {
+      EditorToModel schemeEd = colorSchemeEditor();
+      if (schemeEd != null) {
+        var colorScheme = schemeEd.getColorScheme();
+        token.tokenType = colorScheme.getSemanticIndex(token.foreground, token.background);
+      }
     }
     line.contentDirty = element.style != token.tokenStyle;
     element.color = token.tokenType;
@@ -759,7 +809,11 @@ public class Model {
   }
 
   private boolean isDisableParser() {
-    return editor != null ? editor.isDisableParser() : EditorConst.DEFAULT_DISABLE_PARSER;
+    if (editors.isEmpty()) return EditorConst.DEFAULT_DISABLE_PARSER;
+    for (EditorToModel editorToModel : editors) {
+      if (editorToModel.isDisableParser()) return true;
+    }
+    return false;
   }
 
   interface EditorToModel {

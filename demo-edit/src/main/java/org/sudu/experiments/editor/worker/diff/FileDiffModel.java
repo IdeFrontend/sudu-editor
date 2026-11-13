@@ -60,9 +60,19 @@ public class FileDiffModel {
     this.leftModel = leftModel;
     this.leftModel.setGetUndoBuffer(() -> undoBuffer);
     this.leftModel.setSyncEditing((diff, isUndo) -> syncEditing(true, diff, isUndo));
+    this.leftModel.setOnUpdateModelOnDiff(
+        (diff, isUndo) -> updateModelOnDiffMadeListener(true, diff, isUndo));
+    this.leftModel.setOnIterativeParsed(
+        (start, stop) -> iterativeParseFileListener(true, start, stop));
+    this.leftModel.setOnFileLexed(() -> fullFileLexedListener(true));
     this.rightModel = rightModel;
     this.rightModel.setGetUndoBuffer(() -> undoBuffer);
     this.rightModel.setSyncEditing((diff, isUndo) -> syncEditing(false, diff, isUndo));
+    this.rightModel.setOnUpdateModelOnDiff(
+        (diff, isUndo) -> updateModelOnDiffMadeListener(false, diff, isUndo));
+    this.rightModel.setOnIterativeParsed(
+        (start, stop) -> iterativeParseFileListener(false, start, stop));
+    this.rightModel.setOnFileLexed(() -> fullFileLexedListener(false));
     this.executor = executor;
     if (leftModel.fileLexed() && rightModel.fileLexed()) sendToDiff(false);
   }

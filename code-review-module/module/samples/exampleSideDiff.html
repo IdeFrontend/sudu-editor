@@ -11,13 +11,13 @@
       padding: 0;
     }
 
-    body {
+    .diff {
       overflow: hidden;
       display: flex;
       flex-direction: row;
     }
 
-    #left, #right {
+    .left, .right {
       position: relative;
       width: 50%;
       height: 100%;
@@ -25,8 +25,14 @@
   </style>
 </head>
 <body>
-<div id="left"></div>
-<div id="right"></div>
+<div class="diff">
+  <div class="left" id="left1"></div>
+  <div class="right" id="right1"></div>
+</div>
+<div class="diff">
+  <div class="left" id="left2"></div>
+  <div class="right" id="right2"></div>
+</div>
 
 <script type="module" charset="utf-8" src="exampleSideDiff.js"></script>
 

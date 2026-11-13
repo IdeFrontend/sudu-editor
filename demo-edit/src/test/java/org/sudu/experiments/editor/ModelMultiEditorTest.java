@@ -2,6 +2,9 @@ package org.sudu.experiments.editor;
 
 import org.junit.jupiter.api.Test;
 import org.sudu.experiments.editor.ui.colors.CodeLineColorScheme;
+import org.sudu.experiments.worker.WorkerJobExecutor;
+
+import java.util.function.Consumer;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertSame;
@@ -30,6 +33,29 @@ class ModelMultiEditorTest {
     assertEquals(2, second.onDiffMade);
   }
 
+  @Test
+  void detachRestoresExecutorOfALiveEditor() {
+    Model model = new Model(new String[]{"a"}, Languages.TEXT, null);
+    CountingEditor first = new CountingEditor();
+    CountingEditor second = new CountingEditor();
+    NamedExecutor workerA = new NamedExecutor();
+    NamedExecutor workerB = new NamedExecutor();
+    model.attachEditor(first, workerA);
+    model.attachEditor(second, workerB);
+
+    assertSame(first, model.editor);
+    assertSame(workerA, model.executor);
+
+    model.detachEditor(second);
+    assertSame(first, model.editor);
+    assertSame(workerA, model.executor);
+
+    model.attachEditor(second, workerB);
+    model.detachEditor(first);
+    assertSame(second, model.editor);
+    assertSame(workerB, model.executor);
+  }
+
   static final class CountingEditor implements Model.EditorToModel {
     int onDiffMade;
     int updateModelOnDiff;
@@ -41,5 +67,11 @@ class ModelMultiEditorTest {
     public void onDiffMade() { onDiffMade++; }
     public boolean isDisableParser() { return true; }
     public CodeLineColorScheme getColorScheme() { return null; }
+  }
+
+  static final class NamedExecutor implements WorkerJobExecutor {
+    public void sendToWorker(
+        boolean priority, Consumer<Object[]> handler, String method, Object... args
+    ) {}
   }
 }

@@ -3,82 +3,152 @@ import * as editorApi from "../src/codereview.js";
 const threadPool = await editorApi.newWorkerPool("../src/worker.js", 3);
 
 const textL =
-`import java.util.ArrayList;
-import java.util.List;
+`package org.sudu.experiments.diff;
 
-public class TaskManagerV1 {
-    private List<String> tasks;
+import org.sudu.experiments.WebGLError;
+import org.sudu.experiments.WebWindow;
+import org.sudu.experiments.esm.*;
+import org.sudu.experiments.js.*;
+import org.teavm.jso.JSObject;
+import org.teavm.jso.core.JSObjects;
+import org.teavm.jso.core.JSString;
 
-    public TaskManagerV1() {
-        tasks = new ArrayList<>();
+public class JsCodeReview implements JsCodeReviewView {
+
+  public final WebWindow window;
+  private FileDiffWindow w;
+  private JsFileDiffViewController controller;
+  private IDiffSizeChangeCallback sizeListener;
+  private int eventNumLines, eventLineHeight;
+  private float eventCssLineHeight;
+
+  public JsCodeReview(
+      FileDiffWindow fileDiff, WebWindow ww,
+      EditArgs args
+  ) {
+    this.window = ww;
+    this.w = fileDiff;
+    controller = new JsFileDiffViewController0(w);
+    if (args.hasTheme()) setTheme(args.getTheme());
+    if (args.hasReadonly())
+      setReadonly(args.getReadonly(), args.getReadonly());
+
+    w.rootView.setOnDocumentSizeChange(this::onDocumentSizeChange);
+  }
+
+  @Override
+  public void setReadonly(boolean leftReadonly, boolean rightReadonly) {
+    JsHelper.consoleInfo("JsCodeDiff0.setReadonly");
+    w.rootView.setReadonly(leftReadonly, rightReadonly);
+  }
+
+  @Override
+  public void setTheme(JSObject theme) {
+    var t = ThemeImport.fromJs(theme);
+    if (t != null)
+      w.applyTheme(t);
+    window.repaint();
+  }
+
+  @Override
+  public void setModel(JsITextModel modelL, JsITextModel modelR) {
+    if (!(modelL instanceof JsTextModel jsModelL)) {
+      boolean undefined = JSObjects.isUndefined(modelL);
+      throw new IllegalArgumentException(
+          undefined ? "left model is undefined" : "bad left model");
     }
 
-    public void addTask(String task) {
-        tasks.add(task);
+    if (!(modelR instanceof JsTextModel jsModelR)) {
+      boolean undefined = JSObjects.isUndefined(modelR);
+      throw new IllegalArgumentException(
+          undefined ? "right model is undefined" : "bad right model");
     }
 
-    public void printTasks() {
-        for (String task : tasks) {
-            System.out.println(task);
-        }
-    }
+    w.rootView.setModel(jsModelL.javaModel, jsModelR.javaModel);
+  }
 
-    public static void main(String[] args) {
-        TaskManagerV1 taskManager = new TaskManagerV1();
-        taskManager.addTask("Task 1");
-        taskManager.addTask("Task 2");
-        taskManager.printTasks();
-    }
+  @Override
+  public JsITextModel getLeftModel() {
+    return JsTextModel.fromJava(w.rootView.getLeftModel());
+  }
 
-     public void markTaskAsCompleted(String task) {
-        System.out.println("Task '" + task + "' marked as completed.");
-    }
+  @Override
+  public JsITextModel getRightModel() {
+    return JsTextModel.fromJava(w.rootView.getRightModel());
+  }
 }
 `;
 
 const textR =
-`import java.util.ArrayList;
-import java.util.List;
+`package org.sudu.experiments.diff;
 
-public class TaskManagerV2 {
-    private List<String> tasks;
-    private String description;
+import org.sudu.experiments.WebGLError;
+import org.sudu.experiments.WebWindow;
+import org.sudu.experiments.esm.*;
+import org.sudu.experiments.js.*;
+import org.teavm.jso.JSObject;
+import org.teavm.jso.core.JSObjects;
+import org.teavm.jso.core.JSString;
 
-    public TaskManagerV2(String description) {
-        tasks = new ArrayList<>();
-        this.description = description;
+public class JsCodeReview implements JsCodeReviewView {
+
+  public final WebWindow window;
+  private FileDiffWindow w;
+  private JsFileDiffViewController controller;
+  private IDiffSizeChangeCallback sizeListener;
+  private int eventNumLines, eventLineHeight;
+  private float eventCssLineHeight;
+
+  public JsCodeReview(
+      FileDiffWindow fileDiff, WebWindow ww,
+      EditArgs args
+  ) {
+    this.window = ww;
+    this.w = fileDiff;
+    controller = new JsFileDiffViewController0(w);
+    if (args.hasTheme()) setTheme(args.getTheme());
+    if (args.hasReadonly())
+      setReadonly(args.getReadonly(), args.getReadonly());
+
+    w.rootView.setOnDocumentSizeChange(this::onDocumentSizeChange);
+  }
+
+  @Override
+  public void setReadonly(boolean leftReadonly, boolean rightReadonly) {
+    w.rootView.setReadonly(leftReadonly, rightReadonly);
+  }
+
+  @Override
+  public void enableMergeButtons(boolean leftToRight, boolean rightToLeft) {
+    w.rootView.enableMergeButtons(leftToRight, rightToLeft);
+  }
+
+  @Override
+  public void setTheme(JSObject theme) {
+    var t = ThemeImport.fromJs(theme);
+    if (t != null)
+      w.applyTheme(t);
+    window.repaint();
+  }
+
+  @Override
+  public void setModel(JsITextDiffModel model) {
+    if (!(model instanceof JsTextDiffModel jsModel)) {
+      boolean undefined = JSObjects.isUndefined(model);
+      throw new IllegalArgumentException(undefined ? "Model is undefined" : "Bad model: " + JsHelper.stringify(model));
     }
+    w.rootView.setModel(jsModel.javaModel);
+  }
 
-    public void addTask(String task) {
-        tasks.add(task);
-    }
+  @Override
+  public JsITextModel getLeftModel() {
+    return JsTextModel.fromJava(w.rootView.getLeftModel());
+  }
 
-    public void removeTask(String task) {
-        tasks.remove(task);
-    }
-
-    public void printTasks() {
-        for (String task : tasks) {
-            System.out.println(task);
-        }
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public static void main(String[] args) {
-        TaskManagerV2 taskManager = new TaskManagerV2("Task Manager");
-        taskManager.addTask("Task 1");
-        taskManager.addTask("Task 2");
-        taskManager.removeTask("Task 1");
-        taskManager.setDescription("Updated Task Manager");
-        taskManager.printTasks();
-    }
+  @Override
+  public JsITextModel getRightModel() {
+    return JsTextModel.fromJava(w.rootView.getRightModel());
+  }
 }
 `;
 
@@ -88,22 +158,36 @@ const model = editorApi.newDiffModel(
     "java"
 );
 
-const leftView = editorApi.newSideDiff({
-    containerId: "left",
+const leftView1 = editorApi.newSideDiff({
+    containerId: "left1",
     workers: threadPool
 }, true);
 
-const rightView = editorApi.newSideDiff({
-    containerId: "right",
+const leftView2 = editorApi.newSideDiff({
+    containerId: "left2",
+    workers: threadPool
+}, true);
+
+const rightView1 = editorApi.newSideDiff({
+    containerId: "right1",
     workers: threadPool
 }, false);
 
-leftView.setModel(model);
-rightView.setModel(model);
+const rightView2 = editorApi.newSideDiff({
+    containerId: "right2",
+    workers: threadPool
+}, false);
 
-leftView.setVScrollListener((pos) => rightView.setVScrollPos(pos));
-rightView.setVScrollListener((pos) => leftView.setVScrollPos(pos));
+leftView1.setModel(model);
+rightView1.setModel(model);
+leftView2.setModel(model);
+rightView2.setModel(model);
 
-leftView.focus();
+leftView1.setVScrollListener((pos) => rightView1.setVScrollPos(pos));
+leftView2.setVScrollListener((pos) => rightView2.setVScrollPos(pos));
+rightView1.setVScrollListener((pos) => leftView1.setVScrollPos(pos));
+rightView2.setVScrollListener((pos) => leftView2.setVScrollPos(pos));
 
-console.log("SideDiff left.left =", leftView.left, "right.left =", rightView.left);
+leftView1.focus();
+
+console.log("SideDiff left.left =", leftView1.left, "right.left =", rightView1.left);
