@@ -59,11 +59,7 @@ public class JavaScriptIntervalParser extends BaseIntervalParser<NullParser> {
 
   @Override
   protected void highlightTokens() {
-    LightJavaScriptLexerHighlighting.highlightTokens(allTokens, tokenTypes);
-  }
-
-  public static boolean isComment(int tokenType) {
-    return LightJavaScriptLexerHighlighting.isComment(tokenType);
+    LightJavaScriptLexerHighlighting.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 
   @Override

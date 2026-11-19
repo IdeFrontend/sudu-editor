@@ -29,6 +29,6 @@ public class JsonFirstLinesLexer extends BaseFirstLinesLexer<JsonParser> {
 
   @Override
   protected void highlightTokens() {
-    JsonHighlight.highlightTokens(allTokens, tokenTypes);
+    JsonHighlight.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 }

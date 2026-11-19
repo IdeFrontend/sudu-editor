@@ -49,6 +49,6 @@ public class JavaScriptLightParser extends BaseFullParser<NullParser> {
 
   @Override
   protected void highlightTokens() {
-    LightJavaScriptLexerHighlighting.highlightTokens(allTokens, tokenTypes);
+    LightJavaScriptLexerHighlighting.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 }

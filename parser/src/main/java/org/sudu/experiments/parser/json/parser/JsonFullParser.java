@@ -50,6 +50,6 @@ public class JsonFullParser extends BaseFullParser<JsonParser> {
 
   @Override
   protected void highlightTokens() {
-    JsonHighlight.highlightTokens(allTokens, tokenTypes);
+    JsonHighlight.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 }

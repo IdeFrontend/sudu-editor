@@ -128,7 +128,7 @@ public class JavaViewportIntervalsParser extends BaseIntervalParser<JavaParser> 
 
   @Override
   protected void highlightTokens() {
-    JavaLexerHighlighting.highlightTokens(allTokens, tokenTypes, tokenStyles);
+    JavaLexerHighlighting.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 
   @Override

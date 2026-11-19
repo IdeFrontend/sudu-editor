@@ -32,6 +32,6 @@ public class TypeScriptFirstLinesLexer extends BaseFirstLinesLexer<NullParser> {
 
   @Override
   protected void highlightTokens() {
-    LightTypeScriptHighlighting.highlightTokens(allTokens, tokenTypes);
+    LightTypeScriptHighlighting.INSTANCE.highlight(allTokens, tokenTypes, tokenStyles);
   }
 }
