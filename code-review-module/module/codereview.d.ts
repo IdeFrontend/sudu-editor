@@ -4,7 +4,7 @@
 import { IDisposable } from '@sudu-ide/types';
 
 import {
-  Uri, IEvent, ITextModel, ILineDescriptor, IRange, _TokenDictionary,
+  Uri, IEvent, ITextModel, ILineDescriptor, IRange, IPosition, _TokenDictionary,
   View, HasTheme, Theme, Focusable, TwoPanelDiff,
   IEditorView, FileDiffViewController
 } from '@sudu-ide/types/frontend';
@@ -77,23 +77,45 @@ export interface SideDiffView extends View, HasTheme, Focusable, IDisposable {
   setVScrollListener(listener: EditorScrollListener | null): void
 
   /**
-   * Paints the given ranges as highlights. Pass an empty array or `null` to
-   * clear. Java callers: the array is retained by reference until the next
-   * call — do not mutate it afterward. JS bridges copy on call, so mutating
-   * the JS array afterward is a no-op.
+   * Caret position, 1-based. The caret belongs to the document model, so every
+   * `SideDiffView` showing the same side of the same {@link ITextDiffModel}
+   * reports the same position.
+   */
+  getPosition(): IPosition
+
+  /**
+   * Paints the given ranges as highlights on this pane's document model.
+   * Pass an empty array or `null` to clear.
+   *
+   * The list is stored on that model and shared by every `SideDiffView` whose
+   * {@link setModel} received the same {@link ITextDiffModel}. A later call
+   * from any of those panes replaces the list for all of them, and each
+   * attached pane is repainted.
+   *
+   * Java callers: the array is retained by reference until the next call — do
+   * not mutate it afterward. JS bridges copy on call, so mutating the JS array
+   * afterward is a no-op. Two calls still write onto the one model field; the
+   * first copy is dropped.
    */
   highlightRanges(ranges: IRange[] | null): void
 
   /**
-   * Selects the next highlight after the caret and reveals it in the center.
-   * Always scrolls and fires the vertical scroll listener. No-op if none.
+   * Selects the next highlight after the shared caret and reveals it in every
+   * pane attached to this document model. No-op if none.
+   *
+   * The caret and the selection live on the model, so every pane on this side
+   * moves together. Each of those panes scrolls to the match and fires its own
+   * vertical scroll listener when its vertical position changes. A match that
+   * is already centered does not notify that pane's listener.
    */
   selectNextRange(): void
 
   /**
-   * Selects the previous highlight before the caret and reveals it in the
-   * center. Always scrolls and fires the vertical scroll listener. A caret
-   * inside a match skips that match. No-op if none.
+   * Selects the previous highlight before the shared caret and reveals it in
+   * every pane attached to this document model. A caret inside a match skips
+   * that match. No-op if none.
+   *
+   * Scroll and listener behavior matches {@link selectNextRange}.
    */
   selectPrevRange(): void
 }

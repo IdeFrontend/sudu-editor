@@ -2243,32 +2243,41 @@ public class EditorComponent extends View implements
 
   public void highlightRanges(Range[] ranges) {
     model.highlightRanges = ranges;
-    window().repaint();
+    model.repaintEditors();
   }
 
   /**
    * Selects the next highlighted range after the caret and reveals it in the
-   * center. Always scrolls and notifies the vertical scroll observer (same as
-   * {@code selectAndReveal(range, true, true)}). No-op when there is no next
-   * range.
+   * center of every editor attached to this model. Each editor notifies its
+   * vertical scroll observer when its own vertical position changes. No-op
+   * when there is no next range.
    */
   public void selectNextRange() {
     Range range = model.findAdjacentHighlightRange(true);
     if (range == null) return;
-    selectAndReveal(range, true, true);
-    window().repaint();
+    model.revealHighlightRange(range);
   }
 
   /**
    * Selects the previous highlighted range before the caret and reveals it in
-   * the center. Always scrolls and notifies the vertical scroll observer (same
-   * as {@code selectAndReveal(range, true, true)}). No-op when there is no
-   * previous range. A caret inside a match skips that match and goes to the
-   * one before it.
+   * the center of every editor attached to this model. Each editor notifies
+   * its vertical scroll observer when its own vertical position changes.
+   * No-op when there is no previous range. A caret inside a match skips that
+   * match and goes to the one before it.
    */
   public void selectPrevRange() {
     Range range = model.findAdjacentHighlightRange(false);
     if (range == null) return;
+    model.revealHighlightRange(range);
+  }
+
+  @Override
+  public void repaintView() {
+    window().repaint();
+  }
+
+  @Override
+  public void revealHighlightRange(Range range) {
     selectAndReveal(range, true, true);
     window().repaint();
   }

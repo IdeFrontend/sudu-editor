@@ -373,6 +373,20 @@ public class Model {
     for (int i = 0; i < editors.size(); i++) action.accept(editors.get(i));
   }
 
+  /** Repaint every editor showing this model after {@link #highlightRanges} changes. */
+  void repaintEditors() {
+    forEachEditor(EditorToModel::repaintView);
+  }
+
+  /**
+   * Select {@code range} and reveal it in every editor attached to this model.
+   * Each editor scrolls itself and notifies its own vertical scroll observer
+   * when its position changes.
+   */
+  void revealHighlightRange(Range range) {
+    forEachEditor(editor -> editor.revealHighlightRange(range));
+  }
+
   public void setExecutor(WorkerJobExecutor executor) {
     this.executor = executor;
   }
@@ -899,6 +913,15 @@ public class Model {
     boolean isDisableParser();
 
     CodeLineColorScheme getColorScheme();
+
+    /** Repaint after the shared highlight list changes. */
+    void repaintView();
+
+    /**
+     * Select {@code range}, scroll it into the center, and repaint.
+     * Notifies this editor's vertical scroll observer when the position changes.
+     */
+    void revealHighlightRange(Range range);
   }
 
   public boolean hasDiffModel() {

@@ -417,6 +417,8 @@ class FileDiffModelOncePerEditTest {
     public void onDiffMade() {}
     public boolean isDisableParser() { return true; }
     public CodeLineColorScheme getColorScheme() { return null; }
+    public void repaintView() {}
+    public void revealHighlightRange(Range range) {}
   }
 
   static final class NoopExecutor implements WorkerJobExecutor {

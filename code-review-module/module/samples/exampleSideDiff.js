@@ -195,33 +195,21 @@ console.log("SideDiff left.left =", leftView1.left, "right.left =", rightView1.l
 // ---------------------------------------------------------------------------
 // highlightRanges
 //
-// SideDiffView.highlightRanges paints IRange highlights on that pane's model.
-// The two left panes share the left model and the two right panes share the
-// right model, so the ranges are the same per side, but each pane has its own
-// canvas: call highlightRanges on every pane so each one repaints. Ranges are
-// 1-based. prev / next call selectPrevRange / selectNextRange on the pane last
-// clicked; those reveal the match and fire the vertical scroll listener.
+// Each side of the diff is one document model. Both left panes share it, and
+// both right panes share the other, so each side has one highlight list and
+// one caret. One highlightRanges call per side paints every pane on that
+// model. selectNextRange / selectPrevRange move that caret and scroll every
+// pane attached to the model; each pane then fires its own scroll listener,
+// which pixel-scrolls its partner and does not select the partner's next match.
+//
+// Ranges and getPosition are 1-based. The status is `index/count` once the
+// caret sits on a match, and the count alone when it does not. A next/prev
+// at the end leaves the index unchanged.
 // ---------------------------------------------------------------------------
 
 const searchInput = document.getElementById("search-input");
-const rangePrevButton = document.getElementById("range-prev");
-const rangeNextButton = document.getElementById("range-next");
 const clearButton = document.getElementById("clear-highlights");
 const searchStatus = document.getElementById("search-status");
-
-const panes = [
-  { id: "left1", view: leftView1 },
-  { id: "right1", view: rightView1 },
-  { id: "left2", view: leftView2 },
-  { id: "right2", view: rightView2 },
-];
-
-let activeView = leftView1;
-for (const pane of panes) {
-  document.getElementById(pane.id).addEventListener("pointerdown", () => {
-    activeView = pane.view;
-  });
-}
 
 /** 1-based ranges, the shape highlightRanges accepts. */
 function findMatches(text, query) {
@@ -248,30 +236,50 @@ function findMatches(text, query) {
   return matches;
 }
 
-function applyHighlight(query) {
-  const leftMatches = findMatches(textL, query);
-  const rightMatches = findMatches(textR, query);
-  // null clears; an empty array clears as well
-  const leftRanges = query === "" ? null : leftMatches;
-  const rightRanges = query === "" ? null : rightMatches;
-  leftView1.highlightRanges(leftRanges);
-  leftView2.highlightRanges(leftRanges);
-  rightView1.highlightRanges(rightRanges);
-  rightView2.highlightRanges(rightRanges);
-  searchStatus.textContent = query === ""
+let leftMatches = [];
+let rightMatches = [];
+
+function matchIndex(matches, view) {
+  const pos = view.getPosition();
+  return matches.findIndex(
+    (m) => m.startLineNumber === pos.lineNumber && m.startColumn === pos.column
+  );
+}
+
+function formatSide(label, matches, view) {
+  if (matches.length === 0) return `${label} 0`;
+  const index = matchIndex(matches, view);
+  return index < 0 ? `${label} ${matches.length}` : `${label} ${index + 1}/${matches.length}`;
+}
+
+function renderStatus() {
+  searchStatus.textContent = searchInput.value === ""
     ? ""
-    : `left ${leftMatches.length} · right ${rightMatches.length}`;
+    : `${formatSide("left", leftMatches, leftView1)} · ${formatSide("right", rightMatches, rightView1)}`;
 }
 
-function stepRange(next) {
-  applyHighlight(searchInput.value);
+function applyHighlight(query) {
+  leftMatches = findMatches(textL, query);
+  rightMatches = findMatches(textR, query);
+  // null clears; an empty array clears as well. One call per side: the model
+  // repaints every pane attached to it.
+  leftView1.highlightRanges(query === "" ? null : leftMatches);
+  rightView1.highlightRanges(query === "" ? null : rightMatches);
+  renderStatus();
+}
+
+function stepSide(view, next) {
   if (searchInput.value === "") return;
-  if (next) activeView.selectNextRange();
-  else activeView.selectPrevRange();
+  if (next) view.selectNextRange();
+  else view.selectPrevRange();
+  view.focus();
+  renderStatus();
 }
 
-rangeNextButton.addEventListener("click", () => stepRange(true));
-rangePrevButton.addEventListener("click", () => stepRange(false));
+document.getElementById("left-next").addEventListener("click", () => stepSide(leftView1, true));
+document.getElementById("left-prev").addEventListener("click", () => stepSide(leftView1, false));
+document.getElementById("right-next").addEventListener("click", () => stepSide(rightView1, true));
+document.getElementById("right-prev").addEventListener("click", () => stepSide(rightView1, false));
 clearButton.addEventListener("click", () => {
   searchInput.value = "";
   applyHighlight("");
@@ -281,7 +289,7 @@ searchInput.addEventListener("input", () => applyHighlight(searchInput.value));
 searchInput.addEventListener("keydown", (event) => {
   if (event.key !== "Enter") return;
   event.preventDefault();
-  stepRange(!event.shiftKey);
+  stepSide(leftView1, !event.shiftKey);
 });
 
 applyHighlight(searchInput.value);

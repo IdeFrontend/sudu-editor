@@ -124,6 +124,12 @@ public class JsSideDiff implements JsSideDiffView {
   }
 
   @Override
+  public JsPosition getPosition() {
+    return JsPosition.fromJava(
+        w.rootView.editor.caretCharPos(), w.rootView.editor.caretLine());
+  }
+
+  @Override
   public void setExternalMessageBar(JsExternalMessageBar emb) {}
 
   @Override

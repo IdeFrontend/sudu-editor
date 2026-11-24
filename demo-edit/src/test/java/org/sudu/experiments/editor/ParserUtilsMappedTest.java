@@ -210,5 +210,7 @@ public class ParserUtilsMappedTest {
     public void onDiffMade() {}
     public boolean isDisableParser() { return true; }
     public CodeLineColorScheme getColorScheme() { return scheme; }
+    public void repaintView() {}
+    public void revealHighlightRange(Range range) {}
   }
 }

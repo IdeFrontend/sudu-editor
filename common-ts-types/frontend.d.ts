@@ -454,22 +454,28 @@ export interface IEditorView extends View, HasTheme, Focusable {
 
   /**
    * Paints the given ranges as highlights. Pass an empty array or `null` to
-   * clear. Java callers: the array is retained by reference until the next
+   * clear. The list is stored on the text model: every editor attached to that
+   * model shows it, a later call replaces it for all of them, and each
+   * attached editor is repainted.
+   *
+   * Java callers: the array is retained by reference until the next
    * call — do not mutate it afterward. JS bridges copy on call, so mutating
    * the JS array afterward is a no-op.
    */
   highlightRanges(ranges: IRange[] | null): void
 
   /**
-   * Selects the next highlight after the caret and reveals it in the center.
-   * Always scrolls and fires the vertical scroll listener. No-op if none.
+   * Selects the next highlight after the caret and reveals it in the center
+   * of every editor attached to the model. No-op if none. Each editor's
+   * vertical scroll listener runs when that editor's vertical position changes.
    */
   selectNextRange(): void
 
   /**
    * Selects the previous highlight before the caret and reveals it in the
-   * center. Always scrolls and fires the vertical scroll listener. A caret
-   * inside a match skips that match. No-op if none.
+   * center of every editor attached to the model. A caret inside a match skips
+   * that match. No-op if none. Each editor's vertical scroll listener runs
+   * when that editor's vertical position changes.
    */
   selectPrevRange(): void
 

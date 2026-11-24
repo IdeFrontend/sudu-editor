@@ -16,4 +16,7 @@ public interface JsSideDiffView extends JsView {
   void highlightRanges(JsArrayReader<JsRange> ranges);
   void selectNextRange();
   void selectPrevRange();
+
+  /** 1-based caret of this pane's document model. Shared by every pane on that model. */
+  JsPosition getPosition();
 }
