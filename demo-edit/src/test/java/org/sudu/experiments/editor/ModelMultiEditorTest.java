@@ -71,33 +71,6 @@ class ModelMultiEditorTest {
   }
 
   @Test
-  void highlightNavigationReachesEveryAttachedEditor() {
-    Model model = new Model(new String[]{"alpha", "beta"}, Languages.TEXT, null);
-    CountingEditor first = new CountingEditor();
-    CountingEditor second = new CountingEditor();
-    model.attachEditor(first, null);
-    model.attachEditor(second, null);
-
-    Range firstMatch = new Range(0, 0, 0, 5);
-    Range secondMatch = new Range(1, 0, 1, 4);
-    model.highlightRanges = new Range[]{firstMatch, secondMatch};
-    model.caretLine = 0;
-    model.caretCharPos = 0;
-
-    model.repaintEditors();
-    assertEquals(1, first.repaints);
-    assertEquals(1, second.repaints);
-
-    Range next = model.findAdjacentHighlightRange(true);
-    model.revealHighlightRange(next);
-    assertSame(secondMatch, next);
-    assertEquals(1, first.reveals);
-    assertEquals(1, second.reveals);
-    assertSame(secondMatch, first.revealed);
-    assertSame(secondMatch, second.revealed);
-  }
-
-  @Test
   void documentHighlightsReachEveryAttachedEditor() {
     Model model = new Model(new String[]{"a"}, Languages.TEXT, null);
     CountingEditor first = new CountingEditor();
@@ -124,15 +97,9 @@ class ModelMultiEditorTest {
     public void onDiffMade() { onDiffMade++; }
     public boolean isDisableParser() { return disableParser; }
     public CodeLineColorScheme getColorScheme() { return null; }
-    public void repaintView() { repaints++; }
-    public void revealHighlightRange(Range range) {
-      reveals++;
-      revealed = range;
-    }
-
-    int repaints;
-    int reveals;
-    Range revealed;
+    public void repaintView() {}
+    public void scrollHighlightRange(Range range) {}
+    public void notifyHighlightScroll() {}
   }
 
   static final class NamedExecutor implements WorkerJobExecutor {

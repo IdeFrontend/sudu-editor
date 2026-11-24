@@ -370,7 +370,13 @@ public class Model {
   }
 
   private void forEachEditor(Consumer<EditorToModel> action) {
-    for (int i = 0; i < editors.size(); i++) action.accept(editors.get(i));
+    if (editors.isEmpty()) return;
+    // A listener may detach or replace an editor. Walk a snapshot so that
+    // does not skip or repeat a pane.
+    EditorToModel[] snapshot = editors.toArray(new EditorToModel[editors.size()]);
+    for (EditorToModel editor : snapshot) {
+      if (editors.contains(editor)) action.accept(editor);
+    }
   }
 
   /** Repaint every editor showing this model after {@link #highlightRanges} changes. */
@@ -380,11 +386,14 @@ public class Model {
 
   /**
    * Select {@code range} and reveal it in every editor attached to this model.
-   * Each editor scrolls itself and notifies its own vertical scroll observer
-   * when its position changes.
+   * Every attached editor scrolls before any of them notifies its vertical
+   * scroll observer, so a listener cannot move a pane that has not scrolled yet.
    */
   void revealHighlightRange(Range range) {
-    forEachEditor(editor -> editor.revealHighlightRange(range));
+    if (editors.isEmpty()) return;
+    EditorToModel[] snapshot = editors.toArray(new EditorToModel[editors.size()]);
+    for (EditorToModel editor : snapshot) editor.scrollHighlightRange(range);
+    for (EditorToModel editor : snapshot) editor.notifyHighlightScroll();
   }
 
   public void setExecutor(WorkerJobExecutor executor) {
@@ -918,10 +927,17 @@ public class Model {
     void repaintView();
 
     /**
-     * Select {@code range}, scroll it into the center, and repaint.
-     * Notifies this editor's vertical scroll observer when the position changes.
+     * Select {@code range} and scroll it into the center without notifying
+     * the vertical scroll observer.
      */
-    void revealHighlightRange(Range range);
+    void scrollHighlightRange(Range range);
+
+    /**
+     * Notify the vertical scroll observer of the position
+     * {@link #scrollHighlightRange} applied. If the observer moves this
+     * editor, the centered position is restored.
+     */
+    void notifyHighlightScroll();
   }
 
   public boolean hasDiffModel() {

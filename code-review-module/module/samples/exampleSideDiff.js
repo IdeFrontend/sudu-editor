@@ -160,22 +160,26 @@ const model = editorApi.newDiffModel(
 
 const leftView1 = editorApi.newSideDiff({
     containerId: "left1",
-    workers: threadPool
+    workers: threadPool,
+    readonly: true
 }, true);
 
 const leftView2 = editorApi.newSideDiff({
     containerId: "left2",
-    workers: threadPool
+    workers: threadPool,
+    readonly: true
 }, true);
 
 const rightView1 = editorApi.newSideDiff({
     containerId: "right1",
-    workers: threadPool
+    workers: threadPool,
+    readonly: true
 }, false);
 
 const rightView2 = editorApi.newSideDiff({
     containerId: "right2",
-    workers: threadPool
+    workers: threadPool,
+    readonly: true
 }, false);
 
 leftView1.setModel(model);
@@ -183,10 +187,26 @@ rightView1.setModel(model);
 leftView2.setModel(model);
 rightView2.setModel(model);
 
-leftView1.setVScrollListener((pos) => rightView1.setVScrollPos(pos));
-leftView2.setVScrollListener((pos) => rightView2.setVScrollPos(pos));
-rightView1.setVScrollListener((pos) => leftView1.setVScrollPos(pos));
-rightView2.setVScrollListener((pos) => leftView2.setVScrollPos(pos));
+// One-way for the duration of the callback. A partner with a shorter document
+// clamps the position; writing that clamp back would pull the pane that just
+// centered off its match.
+let syncingScroll = false;
+function syncTo(target) {
+  return (pos) => {
+    if (syncingScroll) return;
+    syncingScroll = true;
+    try {
+      target.setVScrollPos(pos);
+    } finally {
+      syncingScroll = false;
+    }
+  };
+}
+
+leftView1.setVScrollListener(syncTo(rightView1));
+leftView2.setVScrollListener(syncTo(rightView2));
+rightView1.setVScrollListener(syncTo(leftView1));
+rightView2.setVScrollListener(syncTo(leftView2));
 
 leftView1.focus();
 
@@ -197,14 +217,21 @@ console.log("SideDiff left.left =", leftView1.left, "right.left =", rightView1.l
 //
 // Each side of the diff is one document model. Both left panes share it, and
 // both right panes share the other, so each side has one highlight list and
-// one caret. One highlightRanges call per side paints every pane on that
-// model. selectNextRange / selectPrevRange move that caret and scroll every
-// pane attached to the model; each pane then fires its own scroll listener,
-// which pixel-scrolls its partner and does not select the partner's next match.
+// one caret. The panes are readonly: SideDiffView has no getText, so an edit
+// would leave these ranges pointing at text that is no longer in the document.
+// One highlightRanges call per side paints every pane on that model.
+// selectNextRange / selectPrevRange move that caret and scroll every pane
+// attached to the model. Each pane's listener then pixel-scrolls its partner
+// and does not select the partner's next match. The sync flag stops the
+// partner from writing a clamped position back.
 //
-// Ranges and getPosition are 1-based. The status is `index/count` once the
-// caret sits on a match, and the count alone when it does not. A next/prev
-// at the end leaves the index unchanged.
+// Ranges and getPosition are 1-based. Case-folding is ASCII-only so the
+// needle length stays equal to the span in the document. The status is
+// `index/count` once the caret sits on a match, and the count alone when it
+// does not. A next/prev at the end leaves the index unchanged.
+//
+// Enter / Shift+Enter step the left document. Alt+Enter / Alt+Shift+Enter
+// step the right document.
 // ---------------------------------------------------------------------------
 
 const searchInput = document.getElementById("search-input");
@@ -212,15 +239,25 @@ const clearButton = document.getElementById("clear-highlights");
 const searchStatus = document.getElementById("search-status");
 
 /** 1-based ranges, the shape highlightRanges accepts. */
+function foldAscii(text) {
+  let folded = "";
+  for (let i = 0; i < text.length; i++) {
+    const code = text.charCodeAt(i);
+    folded += code >= 65 && code <= 90 ? String.fromCharCode(code + 32) : text[i];
+  }
+  return folded;
+}
+
 function findMatches(text, query) {
   if (query === "") return [];
 
-  const needle = query.toLowerCase();
+  const needle = foldAscii(query);
   const matches = [];
   const lines = text.split("\n");
 
   for (let lineIndex = 0; lineIndex < lines.length; lineIndex++) {
-    const haystack = lines[lineIndex].toLowerCase();
+    const line = lines[lineIndex];
+    const haystack = foldAscii(line);
     let at = haystack.indexOf(needle);
     while (at !== -1) {
       matches.push({
@@ -229,7 +266,7 @@ function findMatches(text, query) {
         endLineNumber: lineIndex + 1,
         endColumn: at + 1 + needle.length,
       });
-      at = haystack.indexOf(needle, at + 1);
+      at = haystack.indexOf(needle, at + needle.length);
     }
   }
 
@@ -289,7 +326,8 @@ searchInput.addEventListener("input", () => applyHighlight(searchInput.value));
 searchInput.addEventListener("keydown", (event) => {
   if (event.key !== "Enter") return;
   event.preventDefault();
-  stepSide(leftView1, !event.shiftKey);
+  const view = event.altKey ? rightView1 : leftView1;
+  stepSide(view, !event.shiftKey);
 });
 
 applyHighlight(searchInput.value);

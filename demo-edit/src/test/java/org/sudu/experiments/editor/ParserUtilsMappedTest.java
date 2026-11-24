@@ -211,6 +211,7 @@ public class ParserUtilsMappedTest {
     public boolean isDisableParser() { return true; }
     public CodeLineColorScheme getColorScheme() { return scheme; }
     public void repaintView() {}
-    public void revealHighlightRange(Range range) {}
+    public void scrollHighlightRange(Range range) {}
+    public void notifyHighlightScroll() {}
   }
 }

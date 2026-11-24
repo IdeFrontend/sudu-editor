@@ -112,6 +112,11 @@ public class EditorComponent extends View implements
   IntConsumer hScrollListener;
   IntConsumer vScrollListener;
   IntConsumer vScrollObserver;
+  /** While true, {@link #notifyVScroll} does not re-enter {@link #vScrollObserver}. */
+  boolean suppressVScrollObserver;
+  /** Scroll applied by {@link #scrollHighlightRange}, restored after its observer runs. */
+  int highlightScrollHold;
+  boolean highlightScrollHeld;
   IntConsumer caretLineObserver;
   int lastNotifiedCaretLine = -1;
   Consumer<EditorComponent> fullFileLexedListener;
@@ -143,11 +148,13 @@ public class EditorComponent extends View implements
   private int numDigits;
 
   public EditorComponent(EditorUi ui) {
-    this.context = ui.windowManager.uiContext;
-    this.g = context.graphics;
+    // A null ui leaves the editor without a window. Tests use that to set a
+    // model, line height, and view height without a graphics context.
     this.ui = ui;
-    lrContext = new ClrContext(context.cleartype);
-    fonts = lrContext.fonts;
+    this.context = ui == null ? null : ui.windowManager.uiContext;
+    this.g = context == null ? null : context.graphics;
+    lrContext = context == null ? null : new ClrContext(context.cleartype);
+    fonts = lrContext == null ? null : lrContext.fonts;
 
     debugFlags[1] = this::toggleBlankLines;
     debugFlags[2] = this::toggleTails;
@@ -157,7 +164,7 @@ public class EditorComponent extends View implements
     debugFlags[6] = () -> printResolveTime = !printResolveTime;
     debugFlags[8] = () -> drawTextFrame = !drawTextFrame;
 
-    model.attachEditor(this, window().worker());
+    if (context != null) model.attachEditor(this, window().worker());
   }
 
   /*Disposable*/ void registerMouse(InputListeners input) {
@@ -284,6 +291,7 @@ public class EditorComponent extends View implements
   }
 
   private void startBlinking() {
+    if (context == null) return;
     caret.startDelay(window().timeNow());
   }
 
@@ -462,7 +470,7 @@ public class EditorComponent extends View implements
     size.set(0,0);
     clearCodeMap();
     CodeLineRenderer.disposeLines(lines);
-    lrContext.dispose();
+    if (lrContext != null) lrContext.dispose();
     lineNumbers.dispose();
     mergeButtons = Disposable.assign(mergeButtons, null);
     model.removeGetUndoBuffer(getUndoBuffer);
@@ -643,7 +651,7 @@ public class EditorComponent extends View implements
     if (vScrollListener != null) {
       vScrollListener.accept(delta);
     }
-    if (notifyObserver && vScrollObserver != null) {
+    if (notifyObserver && vScrollObserver != null && !suppressVScrollObserver) {
       vScrollObserver.accept(vScrollPos);
     }
     return true;
@@ -2231,7 +2239,9 @@ public class EditorComponent extends View implements
 
   private void revealLineInCenter(int lineNumber, boolean notifyObserver) {
     int viewLine = docToView.docToViewCursor(lineNumber);
-    if (viewLine < 0) return;
+    // lineHeight is 0 until the first font layout. Dividing by it throws
+    // on the JVM and would abort reveal of every other editor on the model.
+    if (viewLine < 0 || lineHeight <= 0) return;
     int computed = lineHeight *
         (viewLine - (editorHeight() / (lineHeight * 2)) - 1);
     setScrollPosY(computed, notifyObserver);
@@ -2248,9 +2258,10 @@ public class EditorComponent extends View implements
 
   /**
    * Selects the next highlighted range after the caret and reveals it in the
-   * center of every editor attached to this model. Each editor notifies its
-   * vertical scroll observer when its own vertical position changes. No-op
-   * when there is no next range.
+   * center of every editor attached to this model. Every editor scrolls
+   * before any vertical scroll observer runs. An observer that moves one of
+   * those editors does not leave it off the match. No-op when there is no
+   * next range.
    */
   public void selectNextRange() {
     Range range = model.findAdjacentHighlightRange(true);
@@ -2260,10 +2271,11 @@ public class EditorComponent extends View implements
 
   /**
    * Selects the previous highlighted range before the caret and reveals it in
-   * the center of every editor attached to this model. Each editor notifies
-   * its vertical scroll observer when its own vertical position changes.
-   * No-op when there is no previous range. A caret inside a match skips that
-   * match and goes to the one before it.
+   * the center of every editor attached to this model. Every editor scrolls
+   * before any vertical scroll observer runs. An observer that moves one of
+   * those editors does not leave it off the match. No-op when there is no
+   * previous range. A caret inside a match skips that match and goes to the
+   * one before it.
    */
   public void selectPrevRange() {
     Range range = model.findAdjacentHighlightRange(false);
@@ -2273,13 +2285,34 @@ public class EditorComponent extends View implements
 
   @Override
   public void repaintView() {
-    window().repaint();
+    if (context != null) window().repaint();
   }
 
   @Override
-  public void revealHighlightRange(Range range) {
-    selectAndReveal(range, true, true);
-    window().repaint();
+  public void scrollHighlightRange(Range range) {
+    selectAndReveal(range, true, false);
+    highlightScrollHold = vScrollPos;
+    highlightScrollHeld = true;
+    repaintView();
+  }
+
+  @Override
+  public void notifyHighlightScroll() {
+    if (!highlightScrollHeld) return;
+    int held = highlightScrollHold;
+    highlightScrollHeld = false;
+    if (vScrollObserver != null) {
+      boolean previous = suppressVScrollObserver;
+      suppressVScrollObserver = true;
+      try {
+        vScrollObserver.accept(held);
+      } finally {
+        suppressVScrollObserver = previous;
+      }
+    }
+    // A partner that clamps the position and writes it back must not win,
+    // including a write onto a sibling that has not notified yet.
+    if (vScrollPos != held) setVScrollPosSilent(held);
   }
 
   private void revealLine(int lineNumber, boolean notifyObserver) {
@@ -2332,7 +2365,7 @@ public class EditorComponent extends View implements
       // revealLineInCenter only moves the vertical scroll. The caret is already
       // at the range start, so the same horizontal adjustment a caret move uses
       // brings that column into view.
-      adjustEditorHScrollToCaret();
+      if (context != null) adjustEditorHScrollToCaret();
     }
   }
 

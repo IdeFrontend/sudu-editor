@@ -104,9 +104,11 @@ export interface SideDiffView extends View, HasTheme, Focusable, IDisposable {
    * pane attached to this document model. No-op if none.
    *
    * The caret and the selection live on the model, so every pane on this side
-   * moves together. Each of those panes scrolls to the match and fires its own
-   * vertical scroll listener when its vertical position changes. A match that
-   * is already centered does not notify that pane's listener.
+   * moves together. Every attached pane scrolls to the match before any
+   * vertical scroll listener runs. Each listener then fires when that pane's
+   * position changed. The call returns with those panes still centered: a
+   * listener that writes a different scroll position back does not leave the
+   * pane there. A match that was already centered does not notify.
    */
   selectNextRange(): void
 
