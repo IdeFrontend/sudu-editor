@@ -469,7 +469,8 @@ export interface IEditorView extends View, HasTheme, Focusable {
    * of every editor attached to the model. No-op if none. Every editor scrolls
    * before any vertical scroll listener runs. A listener runs only when that
    * editor's vertical position changed, and the value is the centered scroll.
-   * The centered position is restored after every listener has returned.
+   * A `setVScrollPos` from inside a listener is not that value. The centered
+   * position is restored after every listener has returned.
    */
   selectNextRange(): void
 

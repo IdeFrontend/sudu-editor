@@ -146,6 +146,65 @@ class EditorHighlightRevealTest {
     assertEquals(0, unpaintedPulls[0]);
   }
 
+  @Test
+  void nestedSelectNextDoesNotClearQuietOrMoveTheCaret() {
+    String[] lines = new String[40];
+    Arrays.fill(lines, "alpha");
+    Model model = new Model(lines, Languages.TEXT, null);
+    EditorComponent first = editor(model, LINE_HEIGHT, VIEW_HEIGHT);
+    EditorComponent second = editor(model, LINE_HEIGHT, VIEW_HEIGHT);
+
+    Range near = new Range(8, 1, 8, 5);
+    Range far = new Range(30, 1, 30, 4);
+    model.highlightRanges = new Range[]{near, far};
+    model.caretLine = 0;
+    model.caretCharPos = 0;
+
+    List<Integer> secondSeen = new ArrayList<>();
+    second.setVScrollObserver(secondSeen::add);
+    first.setVScrollObserver(pos -> {
+      // Re-entering would move the caret to `far` and drop the quiet count.
+      second.selectNextRange();
+      second.setVScrollPos(0);
+    });
+
+    first.selectNextRange();
+
+    int nearScroll = centeredScroll(near.startLineNumber);
+    assertEquals(near.startLineNumber, model.caretLine);
+    assertEquals(near.startColumn, model.caretCharPos);
+    assertEquals(nearScroll, first.getVScrollPos());
+    assertEquals(nearScroll, second.getVScrollPos());
+    assertEquals(List.of(nearScroll), secondSeen);
+    assertEquals(0, first.highlightScrollQuietDepth);
+    assertEquals(0, second.highlightScrollQuietDepth);
+  }
+
+  @Test
+  void detachedEditorIsNotNotifiedAndIsNotLeftQuiet() {
+    String[] lines = new String[40];
+    Arrays.fill(lines, "alpha");
+    Model model = new Model(lines, Languages.TEXT, null);
+    EditorComponent first = editor(model, LINE_HEIGHT, VIEW_HEIGHT);
+    EditorComponent second = editor(model, LINE_HEIGHT, VIEW_HEIGHT);
+
+    Range near = new Range(8, 1, 8, 5);
+    model.highlightRanges = new Range[]{near};
+    model.caretLine = 0;
+    model.caretCharPos = 0;
+
+    int[] secondPulls = {0};
+    second.setVScrollObserver(pos -> secondPulls[0]++);
+    first.setVScrollObserver(pos -> model.detachEditor(second));
+
+    first.selectNextRange();
+
+    assertEquals(0, secondPulls[0]);
+    assertEquals(0, second.highlightScrollQuietDepth);
+    second.setVScrollPos(1);
+    assertEquals(1, secondPulls[0]);
+  }
+
   /** Editor with no window. {@code lineHeight} must be positive before a reveal scrolls. */
   private static EditorComponent editor(Model model, int lineHeight, int viewHeight) {
     EditorComponent editor = new EditorComponent(null);

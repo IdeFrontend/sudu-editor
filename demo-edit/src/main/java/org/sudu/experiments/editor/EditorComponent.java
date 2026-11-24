@@ -115,11 +115,10 @@ public class EditorComponent extends View implements
   /** While true, {@link #notifyVScroll} does not re-enter {@link #vScrollObserver}. */
   boolean suppressVScrollObserver;
   /**
-   * While a highlight reveal is notifying, {@link #setVScrollPos} does not
-   * report the temporary position. {@link #notifyHighlightScroll} is the
-   * callback that carries the centered scroll.
+   * While positive, {@link #setVScrollPos} does not report a yanked position.
+   * A nested highlight reveal adds a level instead of clearing the outer one.
    */
-  boolean highlightScrollQuiet;
+  int highlightScrollQuietDepth;
   /** Centered scroll from the last highlight reveal that actually ran. */
   int highlightScrollHold;
   /** That reveal ran, so a listener must not leave this editor off the match. */
@@ -661,7 +660,7 @@ public class EditorComponent extends View implements
     // position. The centered scroll is reported later, once, by
     // notifyHighlightScroll. The diff listener already ran when the reveal
     // itself scrolled.
-    if (highlightScrollQuiet) return true;
+    if (highlightScrollQuietDepth > 0) return true;
     if (vScrollListener != null) {
       vScrollListener.accept(delta);
     }
@@ -2321,7 +2320,8 @@ public class EditorComponent extends View implements
 
   @Override
   public void holdHighlightScrollNotify(boolean hold) {
-    highlightScrollQuiet = hold;
+    if (hold) highlightScrollQuietDepth++;
+    else if (highlightScrollQuietDepth > 0) highlightScrollQuietDepth--;
   }
 
   @Override

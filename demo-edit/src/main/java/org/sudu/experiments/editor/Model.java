@@ -40,6 +40,8 @@ public class Model {
   EditorToModel editor;
   private final List<EditorToModel> editors = new ArrayList<>();
   private final List<WorkerJobExecutor> executors = new ArrayList<>();
+  /** Nested highlight reveals. Listeners cannot start another one. */
+  private int highlightRevealDepth;
 
   WorkerJobExecutor executor;
 
@@ -389,20 +391,32 @@ public class Model {
    * Every attached editor scrolls before any vertical scroll observer runs.
    * Observers run only for editors whose position changed, and the value they
    * receive is the centered scroll. A {@code setVScrollPos} from inside a
-   * listener does not report the temporary position. After every observer
-   * has returned, each editor that revealed the match is put back on that
-   * scroll if a listener moved it.
+   * listener does not report the temporary position. A listener that calls
+   * {@code selectNextRange} or {@code selectPrevRange} does not start another
+   * reveal. After every observer has returned, each editor that revealed the
+   * match is put back on that scroll if a listener moved it. An editor
+   * detached during the call is not notified.
    */
   void revealHighlightRange(Range range) {
-    if (editors.isEmpty()) return;
+    if (editors.isEmpty() || highlightRevealDepth > 0) return;
+    highlightRevealDepth++;
     EditorToModel[] snapshot = editors.toArray(new EditorToModel[editors.size()]);
-    for (EditorToModel editor : snapshot) editor.scrollHighlightRange(range);
-    for (EditorToModel editor : snapshot) editor.holdHighlightScrollNotify(true);
     try {
-      for (EditorToModel editor : snapshot) editor.notifyHighlightScroll();
-      for (EditorToModel editor : snapshot) editor.restoreHighlightScroll();
+      for (EditorToModel editor : snapshot) {
+        if (editors.contains(editor)) editor.scrollHighlightRange(range);
+      }
+      for (EditorToModel editor : snapshot) editor.holdHighlightScrollNotify(true);
+      for (EditorToModel editor : snapshot) {
+        if (editors.contains(editor)) editor.notifyHighlightScroll();
+      }
+      for (EditorToModel editor : snapshot) {
+        if (editors.contains(editor)) editor.restoreHighlightScroll();
+      }
     } finally {
+      // Clear quiet on the original snapshot, including an editor that was
+      // detached, so it is not left silent.
       for (EditorToModel editor : snapshot) editor.holdHighlightScrollNotify(false);
+      highlightRevealDepth--;
     }
   }
 
@@ -943,9 +957,9 @@ public class Model {
     void scrollHighlightRange(Range range);
 
     /**
-     * While {@code hold} is true, {@code setVScrollPos} on this editor does
-     * not notify. A highlight reveal sets it on every attached editor before
-     * any listener runs, so a yanked position is not reported.
+     * {@code true} deepens the quiet count and {@code false} releases one
+     * level. {@code setVScrollPos} stays silent while the count is positive,
+     * so a nested reveal cannot make an outer pass report a yanked position.
      */
     void holdHighlightScrollNotify(boolean hold);
 
