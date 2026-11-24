@@ -419,6 +419,7 @@ class FileDiffModelOncePerEditTest {
     public CodeLineColorScheme getColorScheme() { return null; }
     public void repaintView() {}
     public void scrollHighlightRange(Range range) {}
+    public void holdHighlightScrollNotify(boolean hold) {}
     public void notifyHighlightScroll() {}
     public void restoreHighlightScroll() {}
   }

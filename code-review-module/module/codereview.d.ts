@@ -108,8 +108,10 @@ export interface SideDiffView extends View, HasTheme, Focusable, IDisposable {
    * vertical scroll listener runs. A listener fires only when that pane's
    * position changed. A match that was already centered does not notify, and
    * neither does a pane that skipped the reveal because it has no font yet.
-   * The centered position is put back after every listener has returned, so
-   * a listener on a later pane cannot leave an earlier pane off the match.
+   * The value is the centered scroll: a {@code setVScrollPos} from inside a
+   * listener does not report the temporary position. The centered position
+   * is put back after every listener has returned, so a listener on a later
+   * pane cannot leave an earlier pane off the match.
    */
   selectNextRange(): void
 

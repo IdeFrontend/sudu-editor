@@ -212,6 +212,7 @@ public class ParserUtilsMappedTest {
     public CodeLineColorScheme getColorScheme() { return scheme; }
     public void repaintView() {}
     public void scrollHighlightRange(Range range) {}
+    public void holdHighlightScrollNotify(boolean hold) {}
     public void notifyHighlightScroll() {}
     public void restoreHighlightScroll() {}
   }

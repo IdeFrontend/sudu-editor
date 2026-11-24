@@ -387,16 +387,23 @@ public class Model {
   /**
    * Select {@code range} and reveal it in every editor attached to this model.
    * Every attached editor scrolls before any vertical scroll observer runs.
-   * Observers run only for editors whose position changed. After every
-   * observer has returned, each editor that revealed the match is put back
-   * on that scroll if a listener moved it.
+   * Observers run only for editors whose position changed, and the value they
+   * receive is the centered scroll. A {@code setVScrollPos} from inside a
+   * listener does not report the temporary position. After every observer
+   * has returned, each editor that revealed the match is put back on that
+   * scroll if a listener moved it.
    */
   void revealHighlightRange(Range range) {
     if (editors.isEmpty()) return;
     EditorToModel[] snapshot = editors.toArray(new EditorToModel[editors.size()]);
     for (EditorToModel editor : snapshot) editor.scrollHighlightRange(range);
-    for (EditorToModel editor : snapshot) editor.notifyHighlightScroll();
-    for (EditorToModel editor : snapshot) editor.restoreHighlightScroll();
+    for (EditorToModel editor : snapshot) editor.holdHighlightScrollNotify(true);
+    try {
+      for (EditorToModel editor : snapshot) editor.notifyHighlightScroll();
+      for (EditorToModel editor : snapshot) editor.restoreHighlightScroll();
+    } finally {
+      for (EditorToModel editor : snapshot) editor.holdHighlightScrollNotify(false);
+    }
   }
 
   public void setExecutor(WorkerJobExecutor executor) {
@@ -936,9 +943,17 @@ public class Model {
     void scrollHighlightRange(Range range);
 
     /**
+     * While {@code hold} is true, {@code setVScrollPos} on this editor does
+     * not notify. A highlight reveal sets it on every attached editor before
+     * any listener runs, so a yanked position is not reported.
+     */
+    void holdHighlightScrollNotify(boolean hold);
+
+    /**
      * Notify the vertical scroll observer when {@link #scrollHighlightRange}
      * changed this editor's position. An editor that did not move does not
-     * notify, including one that skipped the reveal.
+     * notify, including one that skipped the reveal. The argument is the
+     * centered scroll, not a position a sibling wrote during this reveal.
      */
     void notifyHighlightScroll();
 

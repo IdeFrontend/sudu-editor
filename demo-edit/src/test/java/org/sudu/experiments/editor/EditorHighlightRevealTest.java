@@ -2,7 +2,9 @@ package org.sudu.experiments.editor;
 
 import org.junit.jupiter.api.Test;
 
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
 import static org.junit.jupiter.api.Assertions.assertTrue;
@@ -29,6 +31,7 @@ class EditorHighlightRevealTest {
 
     int[] pulls = {0};
     int[] unpaintedPulls = {0};
+    List<Integer> secondSeen = new ArrayList<>();
     first.setVScrollObserver(pos -> {
       pulls[0]++;
       // A shorter partner clamps and writes the clamped value back, and also
@@ -36,6 +39,8 @@ class EditorHighlightRevealTest {
       first.setVScrollPos(0);
       second.setVScrollPos(0);
     });
+    // The yank above must not be what second observes. One call, with the center.
+    second.setVScrollObserver(secondSeen::add);
     // A pane that skipped the reveal must not report its old scroll.
     unpainted.setVScrollObserver(pos -> unpaintedPulls[0]++);
 
@@ -52,7 +57,8 @@ class EditorHighlightRevealTest {
     assertEquals(nearScroll, first.getVScrollPos());
     assertEquals(nearScroll, second.getVScrollPos());
     assertEquals(0, unpainted.getVScrollPos());
-    assertTrue(pulls[0] >= 1);
+    assertEquals(1, pulls[0]);
+    assertEquals(List.of(nearScroll), secondSeen);
     assertEquals(0, unpaintedPulls[0]);
 
     // The caret selectAndReveal wrote is the start of `near`, so the next
@@ -72,7 +78,38 @@ class EditorHighlightRevealTest {
     assertEquals(farScroll, first.getVScrollPos());
     assertEquals(farScroll, second.getVScrollPos());
     assertEquals(pullsAtFar, pulls[0]);
+    assertEquals(List.of(nearScroll), secondSeen);
     assertEquals(0, unpaintedPulls[0]);
+  }
+
+  @Test
+  void yankOfAnAlreadyCenteredPaneDoesNotNotifyIt() {
+    String[] lines = new String[40];
+    Arrays.fill(lines, "alpha");
+    Model model = new Model(lines, Languages.TEXT, null);
+    EditorComponent first = editor(model, LINE_HEIGHT, VIEW_HEIGHT);
+    EditorComponent second = editor(model, LINE_HEIGHT, VIEW_HEIGHT);
+
+    Range near = new Range(8, 1, 8, 5);
+    model.highlightRanges = new Range[]{near};
+    model.caretLine = 0;
+    model.caretCharPos = 0;
+
+    int nearScroll = centeredScroll(near.startLineNumber);
+    // Already on the match, so this reveal will not notify second on its own.
+    second.setVScrollPosSilent(nearScroll);
+    List<Integer> secondSeen = new ArrayList<>();
+    second.setVScrollObserver(secondSeen::add);
+    first.setVScrollObserver(pos -> {
+      first.setVScrollPos(0);
+      second.setVScrollPos(0);
+    });
+
+    first.selectNextRange();
+
+    assertEquals(nearScroll, first.getVScrollPos());
+    assertEquals(nearScroll, second.getVScrollPos());
+    assertEquals(List.of(), secondSeen);
   }
 
   @Test
