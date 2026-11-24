@@ -2277,9 +2277,12 @@ public class EditorComponent extends View implements
    * before any vertical scroll observer runs. An observer runs only when
    * that editor's position changed. After every observer has returned, an
    * editor that revealed the match is put back if a listener moved it.
-   * No-op when there is no next range.
+   * No-op when there is no next range. A call from a scroll listener while
+   * this reveal is already running is also a no-op: the caret, the scroll,
+   * and listeners stay on the match the outer call selected.
    */
   public void selectNextRange() {
+    if (model.highlightRevealInProgress()) return;
     Range range = model.findAdjacentHighlightRange(true);
     if (range == null) return;
     model.revealHighlightRange(range);
@@ -2291,10 +2294,12 @@ public class EditorComponent extends View implements
    * before any vertical scroll observer runs. An observer runs only when
    * that editor's position changed. After every observer has returned, an
    * editor that revealed the match is put back if a listener moved it.
-   * No-op when there is no previous range. A caret inside a match skips
-   * that match and goes to the one before it.
+   * No-op when there is no previous range. A call from a scroll listener
+   * while this reveal is already running is also a no-op. A caret inside a
+   * match skips that match and goes to the one before it.
    */
   public void selectPrevRange() {
+    if (model.highlightRevealInProgress()) return;
     Range range = model.findAdjacentHighlightRange(false);
     if (range == null) return;
     model.revealHighlightRange(range);

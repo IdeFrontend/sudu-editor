@@ -101,7 +101,9 @@ export interface SideDiffView extends View, HasTheme, Focusable, IDisposable {
 
   /**
    * Selects the next highlight after the shared caret and reveals it in every
-   * pane attached to this document model. No-op if none.
+   * pane attached to this document model. No-op if none. A call from a scroll
+   * listener during this reveal is also a no-op: the caret stays on the match
+   * the outer call just selected, and nothing scrolls or notifies.
    *
    * The caret and the selection live on the model, so every pane on this side
    * moves together. Every attached pane scrolls to the match before any

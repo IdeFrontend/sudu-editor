@@ -386,6 +386,11 @@ public class Model {
     forEachEditor(EditorToModel::repaintView);
   }
 
+  /** True while {@link #revealHighlightRange} is on the stack. */
+  boolean highlightRevealInProgress() {
+    return highlightRevealDepth > 0;
+  }
+
   /**
    * Select {@code range} and reveal it in every editor attached to this model.
    * Every attached editor scrolls before any vertical scroll observer runs.
