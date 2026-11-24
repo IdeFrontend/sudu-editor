@@ -28,6 +28,7 @@ class EditorHighlightRevealTest {
     model.caretCharPos = 0;
 
     int[] pulls = {0};
+    int[] unpaintedPulls = {0};
     first.setVScrollObserver(pos -> {
       pulls[0]++;
       // A shorter partner clamps and writes the clamped value back, and also
@@ -35,6 +36,8 @@ class EditorHighlightRevealTest {
       first.setVScrollPos(0);
       second.setVScrollPos(0);
     });
+    // A pane that skipped the reveal must not report its old scroll.
+    unpainted.setVScrollObserver(pos -> unpaintedPulls[0]++);
 
     first.selectNextRange();
 
@@ -50,19 +53,60 @@ class EditorHighlightRevealTest {
     assertEquals(nearScroll, second.getVScrollPos());
     assertEquals(0, unpainted.getVScrollPos());
     assertTrue(pulls[0] >= 1);
+    assertEquals(0, unpaintedPulls[0]);
 
     // The caret selectAndReveal wrote is the start of `near`, so the next
-    // call must move on to `far` rather than select `near` again.
+    // call must move on to `far`. Both panes are already on that scroll, so
+    // the listener must not run again.
+    int farScroll = centeredScroll(far.startLineNumber);
+    assertTrue(farScroll > nearScroll);
+    first.setVScrollPosSilent(farScroll);
+    second.setVScrollPosSilent(farScroll);
+    int pullsAtFar = pulls[0];
     second.selectNextRange();
 
     assertEquals(far.startLineNumber, model.caretLine);
     assertEquals(far.startColumn, model.caretCharPos);
     assertEquals(far.startLineNumber, model.selection.startPos.line);
     assertEquals(far.endColumn, model.selection.endPos.charPos);
-    int farScroll = centeredScroll(far.startLineNumber);
-    assertTrue(farScroll > nearScroll);
     assertEquals(farScroll, first.getVScrollPos());
     assertEquals(farScroll, second.getVScrollPos());
+    assertEquals(pullsAtFar, pulls[0]);
+    assertEquals(0, unpaintedPulls[0]);
+  }
+
+  @Test
+  void laterListenerCannotLeaveAnEarlierPaneOffTheMatch() {
+    String[] lines = new String[40];
+    Arrays.fill(lines, "alpha");
+    Model model = new Model(lines, Languages.TEXT, null);
+    EditorComponent first = editor(model, LINE_HEIGHT, VIEW_HEIGHT);
+    EditorComponent second = editor(model, LINE_HEIGHT, VIEW_HEIGHT);
+    EditorComponent unpainted = editor(model, 0, VIEW_HEIGHT);
+
+    Range near = new Range(8, 1, 8, 5);
+    model.highlightRanges = new Range[]{near};
+    model.caretLine = 0;
+    model.caretCharPos = 0;
+
+    int[] secondPulls = {0};
+    int[] unpaintedPulls = {0};
+    // Runs after first has already notified. Must not leave first at 0.
+    second.setVScrollObserver(pos -> {
+      secondPulls[0]++;
+      first.setVScrollPos(0);
+    });
+    unpainted.setVScrollObserver(pos -> unpaintedPulls[0]++);
+
+    first.selectNextRange();
+
+    int nearScroll = centeredScroll(near.startLineNumber);
+    assertTrue(nearScroll > 0);
+    assertEquals(nearScroll, first.getVScrollPos());
+    assertEquals(nearScroll, second.getVScrollPos());
+    assertEquals(0, unpainted.getVScrollPos());
+    assertEquals(1, secondPulls[0]);
+    assertEquals(0, unpaintedPulls[0]);
   }
 
   /** Editor with no window. {@code lineHeight} must be positive before a reveal scrolls. */

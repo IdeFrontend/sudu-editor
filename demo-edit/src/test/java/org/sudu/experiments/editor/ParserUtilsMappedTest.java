@@ -213,5 +213,6 @@ public class ParserUtilsMappedTest {
     public void repaintView() {}
     public void scrollHighlightRange(Range range) {}
     public void notifyHighlightScroll() {}
+    public void restoreHighlightScroll() {}
   }
 }

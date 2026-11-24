@@ -420,6 +420,7 @@ class FileDiffModelOncePerEditTest {
     public void repaintView() {}
     public void scrollHighlightRange(Range range) {}
     public void notifyHighlightScroll() {}
+    public void restoreHighlightScroll() {}
   }
 
   static final class NoopExecutor implements WorkerJobExecutor {

@@ -467,9 +467,9 @@ export interface IEditorView extends View, HasTheme, Focusable {
   /**
    * Selects the next highlight after the caret and reveals it in the center
    * of every editor attached to the model. No-op if none. Every editor scrolls
-   * before any vertical scroll listener runs. The call returns with those
-   * editors still centered. A listener runs when that editor's vertical
-   * position changed.
+   * before any vertical scroll listener runs. A listener runs only when that
+   * editor's vertical position changed. The centered position is restored
+   * after every listener has returned.
    */
   selectNextRange(): void
 

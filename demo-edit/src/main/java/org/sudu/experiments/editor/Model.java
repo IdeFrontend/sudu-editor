@@ -386,14 +386,17 @@ public class Model {
 
   /**
    * Select {@code range} and reveal it in every editor attached to this model.
-   * Every attached editor scrolls before any of them notifies its vertical
-   * scroll observer, so a listener cannot move a pane that has not scrolled yet.
+   * Every attached editor scrolls before any vertical scroll observer runs.
+   * Observers run only for editors whose position changed. After every
+   * observer has returned, each editor that revealed the match is put back
+   * on that scroll if a listener moved it.
    */
   void revealHighlightRange(Range range) {
     if (editors.isEmpty()) return;
     EditorToModel[] snapshot = editors.toArray(new EditorToModel[editors.size()]);
     for (EditorToModel editor : snapshot) editor.scrollHighlightRange(range);
     for (EditorToModel editor : snapshot) editor.notifyHighlightScroll();
+    for (EditorToModel editor : snapshot) editor.restoreHighlightScroll();
   }
 
   public void setExecutor(WorkerJobExecutor executor) {
@@ -933,11 +936,17 @@ public class Model {
     void scrollHighlightRange(Range range);
 
     /**
-     * Notify the vertical scroll observer of the position
-     * {@link #scrollHighlightRange} applied. If the observer moves this
-     * editor, the centered position is restored.
+     * Notify the vertical scroll observer when {@link #scrollHighlightRange}
+     * changed this editor's position. An editor that did not move does not
+     * notify, including one that skipped the reveal.
      */
     void notifyHighlightScroll();
+
+    /**
+     * Put back the centered position if a listener moved this editor.
+     * Runs after every editor in the reveal has notified.
+     */
+    void restoreHighlightScroll();
   }
 
   public boolean hasDiffModel() {
